@@ -1,0 +1,18 @@
+# Worker de provedores (FILMELIER-3, design.md D-14), publicado em *.workers.dev no plano Free.
+# Limites do plano Free, todos respeitados pelo código (constantes no topo de index.mjs): 10 ms de CPU por
+# invocação, 50 subrequests por requisição (o Worker faz no máximo 15 ao TMDB) e 100.000 requisições por dia.
+# A conta vem do login do wrangler ou da variável de ambiente da máquina de quem publica, nunca deste arquivo.
+# O token do TMDB nunca é escrito aqui: chega como segredo do Worker, fora do repositório.
+name = "filmelier-provedores"
+main = "index.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[vars]
+# Origens que podem chamar o Worker publicado (comparação exata, só https): o site no GitHub Pages
+# (https://biramourao.github.io/filmelier/). Alterar só por commit, antes do deploy, nunca pelo painel.
+ORIGENS_PERMITIDAS = "https://biramourao.github.io"
+
+# Só para `npx wrangler dev --env dev` (máquina local); `wrangler deploy` sem --env nunca publica estas origens.
+[env.dev.vars]
+ORIGENS_PERMITIDAS = "http://127.0.0.1:8765,http://192.168.18.227:8765"

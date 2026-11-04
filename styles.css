@@ -1,0 +1,456 @@
+/* Redesenho aconchegante (FILMELIER-2, design.md D-9 a D-12). Só fontes do sistema. */
+
+:root {
+  --cor-fundo: #fff8ef;
+  --cor-superficie: #ffffff;
+  --cor-superficie-suave: #fbeee0;
+  --cor-texto: #3d2b1f;
+  --cor-texto-secundario: #5c4a3d;
+  --cor-link: #8a3015;
+  --cor-primaria: #a33d1f;
+  --cor-primaria-escura: #8a3015;
+  --cor-texto-sobre-primaria: #ffffff;
+  --cor-desabilitado: #7a6a5f;
+  --cor-borda: #a0806a;
+  --cor-foco: #c25400;
+  --cor-aviso-fundo: #fff1d6;
+  --cor-aviso-borda: #b26a00;
+  --cor-erro-texto: #7a1010;
+  --cor-erro-fundo: #fde8e8;
+  --cor-erro-borda: #b00020;
+  --cor-placeholder-1: #f6d5b8;
+  --cor-placeholder-2: #e9a97f;
+  --cor-logo-borda: #8f7260;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--cor-texto);
+  background: var(--cor-fundo);
+  overflow-wrap: anywhere;
+}
+
+main,
+footer {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 2rem;
+  line-height: 1.2;
+  color: var(--cor-primaria-escura);
+}
+
+/* Formulário: humores como chips */
+
+fieldset {
+  min-width: 0;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem 1rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.75rem;
+}
+
+legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+/* Altura reservada para os 7 chips antes de o JS montá-los (evita deslocamento na carga, R-10).
+   Valores para 1, 2 e 3 colunas de auto-fill (largura do conteúdo: 14rem por coluna). */
+#humores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.5rem;
+  min-height: 23.4rem;
+}
+
+@media (min-width: 32.6rem) {
+  #humores {
+    min-height: 13.75rem;
+  }
+}
+
+@media (min-width: 47.2rem) {
+  #humores {
+    min-height: 10.4rem;
+  }
+}
+
+.opcao {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+}
+
+.opcao:has(input:checked) {
+  background: var(--cor-superficie-suave);
+  border-color: var(--cor-primaria);
+  box-shadow: inset 0 0 0 1px var(--cor-primaria);
+}
+
+.opcao input {
+  flex: none;
+  margin: 0 0.5rem 0 0;
+  accent-color: var(--cor-primaria);
+}
+
+.opcao label {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.emoji {
+  flex: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.campo {
+  margin-bottom: 1rem;
+}
+
+label {
+  display: inline-block;
+}
+
+select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 2.75rem;
+  margin-top: 0.25rem;
+  padding: 0.5rem;
+  font: inherit;
+  color: var(--cor-texto);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+}
+
+button {
+  min-height: 2.75rem;
+  padding: 0.6rem 1.2rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--cor-texto-sobre-primaria);
+  background: var(--cor-primaria);
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+button:hover {
+  background: var(--cor-primaria-escura);
+}
+
+button:disabled {
+  background: var(--cor-desabilitado);
+  cursor: not-allowed;
+}
+
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 3px;
+}
+
+a {
+  color: var(--cor-link);
+}
+
+#aviso {
+  padding: 0.5rem 0.75rem;
+  background: var(--cor-aviso-fundo);
+  border-left: 4px solid var(--cor-aviso-borda);
+  border-radius: 0.5rem;
+}
+
+#erro {
+  padding: 0.5rem 0.75rem;
+  color: var(--cor-erro-texto);
+  background: var(--cor-erro-fundo);
+  border-left: 4px solid var(--cor-erro-borda);
+  border-radius: 0.5rem;
+}
+
+/* Lista e card */
+
+#lista {
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  column-gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.75rem;
+}
+
+.card .capa {
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.card .capa img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Placeholder só de CSS: gradiente quente com a perfuração de uma película nas laterais. */
+.card .placeholder {
+  background:
+    repeating-linear-gradient(to bottom, var(--cor-fundo) 0 0.3rem, transparent 0.3rem 0.75rem) left 0.2rem top 0.2rem / 0.3rem 100% no-repeat,
+    repeating-linear-gradient(to bottom, var(--cor-fundo) 0 0.3rem, transparent 0.3rem 0.75rem) right 0.2rem top 0.2rem / 0.3rem 100% no-repeat,
+    linear-gradient(160deg, var(--cor-placeholder-1), var(--cor-placeholder-2));
+}
+
+.card .bloco-titulo {
+  grid-column: 2;
+}
+
+/* Worker ligado: reserva 2 linhas de título (2 x 1.15rem x 1.3) e a linha do título original (0.85rem x 1.4),
+   para a troca pelo título pt-BR não deslocar o layout. */
+.card.titulo-reservado .bloco-titulo {
+  min-height: 4.5rem;
+}
+
+.card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.card .titulo-original {
+  min-height: 1.2rem;
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--cor-texto-secundario);
+}
+
+.card .meta {
+  grid-column: 2;
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--cor-texto-secundario);
+}
+
+.sinopse-bloco,
+.credito-imagem,
+.card .links {
+  grid-column: 1 / -1;
+}
+
+.sinopse-bloco {
+  margin-top: 0.75rem;
+}
+
+/* Altura fixa (4 linhas recolhidas, "Ler mais" e crédito): o bloco não muda de tamanho ao ser preenchido
+   (R-11); só cresce quando o leitor expande a sinopse. */
+.sinopse-bloco {
+  height: 9.8rem;
+}
+
+.sinopse-bloco:has(.sinopse.expandida) {
+  height: auto;
+}
+
+.sinopse-indisponivel {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--cor-texto-secundario);
+}
+
+.credito-imagem.reservado {
+  min-height: 1.4rem;
+}
+
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sinopse {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.95rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+}
+
+.sinopse.expandida {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+
+.marca-idioma {
+  font-weight: 600;
+  color: var(--cor-texto-secundario);
+}
+
+.ler-mais {
+  min-height: 2rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0;
+  font-weight: 400;
+  color: var(--cor-link);
+  background: none;
+  text-decoration: underline;
+}
+
+.ler-mais:hover {
+  color: var(--cor-primaria-escura);
+  background: none;
+}
+
+.credito,
+.credito-imagem {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--cor-texto-secundario);
+}
+
+.card .links {
+  margin: 0.5rem 0 0;
+}
+
+.card .links a {
+  display: inline-block;
+  min-height: 1.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Seção "Onde assistir" (FILMELIER-3): último item do card; a altura mínima reserva atribuição mais 3 categorias antes de o
+   Worker responder (CLS de até 0,1). Valor medido em DECISION.md (D-impl-1 e D-impl-4 da FILMELIER-3). */
+.provedores {
+  grid-column: 1 / -1;
+  min-height: 15.8rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--cor-texto-secundario);
+}
+
+.atribuicao-provedores,
+.estado-provedores,
+.rotulo-categoria {
+  margin: 0 0 0.25rem;
+  color: var(--cor-texto-secundario);
+}
+
+.atribuicao-provedores a {
+  display: inline-block;
+  min-height: 1.5rem;
+  padding: 0.25rem 0;
+  color: var(--cor-link);
+}
+
+.rotulo-categoria {
+  font-weight: 600;
+}
+
+.categoria-provedores {
+  margin-top: 0.25rem;
+}
+
+.lista-provedores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-provedores img {
+  display: block;
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--cor-logo-borda);
+  border-radius: 0.5rem;
+}
+
+.nome-provedor {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--cor-logo-borda);
+  border-radius: 0.5rem;
+}
+
+@media (min-width: 40rem) {
+  .card {
+    grid-template-columns: 8rem minmax(0, 1fr);
+    column-gap: 1rem;
+  }
+
+  .card .capa {
+    grid-row: 1 / span 5;
+  }
+
+  .sinopse-bloco,
+  .credito-imagem,
+  .card .links,
+  .provedores {
+    grid-column: 2;
+  }
+}
+
+footer {
+  font-size: 0.9rem;
+  color: var(--cor-texto-secundario);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}

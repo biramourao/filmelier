@@ -1,0 +1,3 @@
+# studio-ai-harness: merge do ledger entre clones
+.studioai/work/*/07-progress.md merge=union
+.studio/work/*/07-progress.md merge=union

@@ -1,0 +1,8 @@
+{
+  "name": "filmelier",
+  "private": true,
+  "description": "Recomenda até 5 filmes pelo humor do dia, com dados do Wikidata (CC0).",
+  "scripts": {
+    "test": "node --test --test-reporter=tap tests/*.test.mjs"
+  }
+}

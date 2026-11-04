@@ -1,0 +1,11 @@
+# studio-ai-harness: estado local de cada clone
+.studioai/ACTIVE
+.studio/ACTIVE
+.studioai/work/*/.loop-state
+.studio/work/*/.loop-state
+.studioai/work/*/gates.local.json
+.studio/work/*/gates.local.json
+
+# Worker de provedores (FILMELIER-3): arquivos locais do wrangler
+.dev.vars
+.wrangler/

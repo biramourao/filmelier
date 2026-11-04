@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://www.wikidata.org https://pt.wikipedia.org https://en.wikipedia.org https://filmelier-provedores.filmelier.workers.dev; img-src 'self' https://upload.wikimedia.org https://image.tmdb.org; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Filmelier — o que assistir hoje</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script type="module" src="src/app.mjs"></script>
+</head>
+<body>
+  <main>
+    <h1>Filmelier</h1>
+    <p>Diga como você está hoje e receba sugestões de filmes.</p>
+
+    <form id="formulario">
+      <fieldset>
+        <legend>Qual é o seu humor hoje?</legend>
+        <div id="humores"></div>
+      </fieldset>
+
+      <div class="campo">
+        <label for="genero">Gênero (opcional)</label>
+        <select id="genero">
+          <option value="">Qualquer gênero</option>
+        </select>
+      </div>
+
+      <button type="submit" id="recomendar" disabled>Recomendar</button>
+    </form>
+
+    <p id="erro" role="alert" hidden>Não foi possível carregar a lista de filmes. Recarregue a página.</p>
+
+    <section id="resultado">
+      <p id="resumo-lista" class="so-leitor" aria-live="polite"></p>
+      <p id="aviso" hidden></p>
+      <ul id="lista"></ul>
+    </section>
+
+    <button type="button" id="outras" hidden>Outras sugestões</button>
+  </main>
+
+  <footer>
+    <p>
+      <a href="https://www.wikidata.org/" target="_blank" rel="noopener noreferrer">Dados de filmes: Wikidata (CC0)</a>
+      — gerado em <span id="data-geracao"></span>
+    </p>
+    <p>Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</p>
+  </footer>
+</body>
+</html>
