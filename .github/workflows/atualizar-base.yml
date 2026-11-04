@@ -1,0 +1,58 @@
+name: Atualizar a base de filmes
+
+on:
+  schedule:
+    - cron: '0 9 * * 4' # quinta-feira, 06:00 em Brasília (dia de lançamentos no Brasil)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-base
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      FILMELIER_CONTATO: ${{ secrets.FILMELIER_CONTATO }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Exigir o contato do User-Agent
+        run: |
+          if [ -z "$FILMELIER_CONTATO" ]; then
+            echo "Segredo FILMELIER_CONTATO ausente ou vazio." >&2
+            exit 1
+          fi
+
+      - name: Build do dataset
+        run: node scripts/build-dataset.mjs
+
+      - name: Build das notas
+        run: node scripts/build-notas.mjs
+
+      - name: Build do Oscar
+        run: node scripts/build-oscar.mjs
+
+      - name: Rodar a suíte de testes
+        timeout-minutes: 10
+        run: node --test --test-reporter=tap tests/*.test.mjs
+
+      - name: Commitar a base se mudou
+        run: |
+          if git diff --quiet -- data/filmes.json; then
+            echo "Base sem mudanças; nada a commitar."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- data/filmes.json
+          git commit -m "chore: atualiza a base de filmes (execução semanal)"
+          git push

@@ -7,7 +7,9 @@ import { cspEsperada } from './apoio/csp.mjs';
 import { validarUrlWorker } from '../src/provedores.mjs';
 
 const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
-const EXCLUIDOS = new Set(['.git', '.studioai', '.studio', 'openspec', 'node_modules', '.claude']);
+// `.github` fica fora das varreduras de segredo: o workflow referencia o segredo por expressão do Actions (nunca o valor).
+// Ele tem teste próprio (tests/workflow-atualizar-base.test.mjs).
+const EXCLUIDOS = new Set(['.git', '.github', '.studioai', '.studio', 'openspec', 'node_modules', '.claude']);
 
 // Lista arquivos recursivamente a partir de um caminho (arquivo ou diretório).
 function arquivos(caminho, excluidos = new Set()) {

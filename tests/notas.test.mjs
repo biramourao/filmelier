@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  normalizarNota, calcularNotas, montarConsultaNotas, dividirEmLotes, validarNotas, executarNotas, distribuicao,
+  normalizarNota, calcularNotas, suavizarNotas, calcularNotasBrutas, montarConsultaNotas, dividirEmLotes, validarNotas, executarNotas, distribuicao,
 } from '../scripts/lib/notas.mjs';
 
 const lig = (qid, score, by) => ({
@@ -61,10 +61,10 @@ test('distribuição acumulada por faixa', () => {
 
 function ambiente(extras = {}) {
   const dataset = {
-    meta: { geradoEm: '2026-01-01T00:00:00.000Z', fonte: 'Wikidata', licenca: 'CC0 1.0', total: 3 },
+    meta: { geradoEm: '2026-01-01T00:00:00.000Z', fonte: 'Wikidata', licenca: 'CC0 1.0', total: 3, extra: { preservado: true } },
     filmes: [
       { qid: 'Q3', titulo: 'C', ano: 2000, generos: ['Q1'], sitelinks: 5 },
-      { qid: 'Q1', titulo: 'A', ano: 1990, generos: ['Q1'], sitelinks: 9, imdb: 'tt1' },
+      { qid: 'Q1', titulo: 'A', ano: 1990, generos: ['Q1'], sitelinks: 9, imdb: 'tt1', oscarVitorias: 4, oscarIndicacoes: 4 },
       { qid: 'Q2', titulo: 'B', ano: 1980, generos: ['Q1'], sitelinks: 7 },
     ],
   };
@@ -94,10 +94,17 @@ test('executarNotas: grava nota sem mexer nos outros campos nem na ordem; meta.n
   assert.equal(await executarNotas(a.base), 0);
   const saida = JSON.parse(a.gravados[0]);
   assert.deepEqual(saida.filmes.map((f) => f.qid), ['Q3', 'Q1', 'Q2']);
-  assert.equal(saida.filmes[0].nota, 6);
-  assert.equal(saida.filmes[1].nota, 8);
+  // sem filme de duas fontes: M = média de todos com nota = 7; fonte única: 0,75 x nota + 0,25 x 7
+  assert.equal(saida.filmes[0].nota, 6.3);
+  assert.equal(saida.filmes[1].nota, 7.8);
+  assert.equal(saida.meta.notas.mediaReferencia, 7);
+  assert.equal(saida.meta.notas.fonteUnica, 2);
+  assert.deepEqual(saida.meta.extra, { preservado: true });
+  assert.equal(saida.filmes[0].titulo, 'C');
   assert.equal('nota' in saida.filmes[2], false);
   assert.equal(saida.filmes[1].imdb, 'tt1');
+  assert.equal(saida.filmes[1].oscarVitorias, 4);
+  assert.equal(saida.filmes[1].oscarIndicacoes, 4);
   assert.equal(saida.meta.geradoEm, '2026-01-01T00:00:00.000Z');
   assert.equal(saida.meta.notas.com, 2);
   assert.equal(saida.meta.notas.total, 3);
@@ -129,4 +136,28 @@ test('executarNotas: falha persistente não grava e vira linha de erro', async (
   assert.equal(await executarNotas(a.base), 1);
   assert.equal(a.gravados.length, 0);
   assert.match(a.erros[0], /notas-1/);
+});
+
+test('suavização: fonte única 10 com M 6,8 vira 9,2; duas fontes ficam; M só de filmes de duas fontes', () => {
+  const brutas = calcularNotasBrutas([
+    lig('Q1', '100%', RT), // fonte única 10
+    lig('Q2', '60%', RT), lig('Q2', '60/100', MC), // duas fontes 6
+    lig('Q3', '76%', RT), lig('Q3', '76/100', MC), // duas fontes 7,6
+    lig('Q4', '10%', RT), // fonte única 1: não entra na M
+  ]);
+  const { notas, mediaReferencia, fonteUnica } = suavizarNotas(brutas);
+  assert.equal(mediaReferencia, 6.8);
+  assert.equal(fonteUnica, 2);
+  assert.equal(notas.get('Q1'), 9.2);
+  assert.equal(notas.get('Q2'), 6);
+  assert.equal(notas.get('Q3'), 7.6);
+  assert.equal(notas.get('Q4'), 2.5); // 0,75 x 1 + 0,25 x 6,8 = 2,45 -> 2,5
+});
+
+test('suavização: sem nenhum filme de duas fontes, M é a média de todos com nota', () => {
+  const { notas, mediaReferencia, fonteUnica } = suavizarNotas(calcularNotasBrutas([lig('Q1', '100%', RT), lig('Q2', '40%', MC)]));
+  assert.equal(mediaReferencia, 7);
+  assert.equal(fonteUnica, 2);
+  assert.equal(notas.get('Q1'), 9.3); // 7,5 + 1,75 = 9,25 -> 9,3
+  assert.equal(notas.get('Q2'), 4.8); // 3 + 1,75
 });

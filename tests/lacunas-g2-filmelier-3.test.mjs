@@ -111,7 +111,8 @@ test('AC-11: falha 401 com mensagem na chamada de provedores (2ª etapa) também
 test('AC-13: nenhum JWT literal fora de .git, ledger, openspec e node_modules (src/, data/, tests/ e raiz)', () => {
   const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
   const jwt = new RegExp(['ey', 'J[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}'].join(''));
-  const fora = new Set(['.git', '.studioai', '.studio', 'openspec', 'node_modules', '.claude']);
+  // `.github`: o workflow só referencia segredos por expressão do Actions; tem teste próprio de token/e-mail literal.
+  const fora = new Set(['.git', '.github', '.studioai', '.studio', 'openspec', 'node_modules', '.claude']);
   const achados = [];
   const andar = (dir) => {
     for (const e of readdirSync(dir, { withFileTypes: true })) {

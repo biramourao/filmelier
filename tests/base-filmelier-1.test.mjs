@@ -15,7 +15,6 @@ const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const sha = (rel) => createHash('sha256').update(readFileSync(join(raiz, rel))).digest('hex');
 
 const HASHES = {
-  'data/filmes.json': '63db0f945a33b73d4808793b39e3787e71960c7cac736d793f2dd398a008327b',
   'scripts/build-dataset.mjs': '2e3d5f18dfd67cf2800524aefdb9ad9b9f6a4eabdafb9410ba54947348c0ed40',
   'scripts/lib/build.mjs': '7eb71a9e600232b4c48877b9e659cd8c73c4eceeed0c568f895831a33f9dea18',
   'scripts/lib/consulta.mjs': 'c0d09b9db76cb77d5d602902abd6f32f4dd9ee614725b5f67e794d77f97547b1',
@@ -25,7 +24,9 @@ const HASHES = {
   'scripts/lib/wdqs.mjs': '4568c1b792155bd965f1c22004edb9383cdcbf2cd60df90c4b6710bfc5085977',
 };
 
-test('AC-15: data/filmes.json e scripts/ idênticos aos da FILMELIER-1 (sha256 da base 1832cdf)', () => {
+// A atualização semanal (.github/workflows/atualizar-base.yml) regenera data/filmes.json: ele não tem mais hash fixo;
+// o esquema dele segue conferido abaixo. Os scripts de build continuam presos por hash.
+test('AC-15: scripts/ idênticos aos da FILMELIER-1 (sha256 da base 1832cdf)', () => {
   for (const [rel, esperado] of Object.entries(HASHES)) assert.equal(sha(rel), esperado, rel);
 });
 

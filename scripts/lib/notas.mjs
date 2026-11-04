@@ -40,8 +40,8 @@ export function montarConsultaNotas(qids) {
 
 const qidDe = (uri) => /(Q\d+)$/.exec(uri ?? '')?.[1] ?? null;
 
-// bindings do WDQS -> Map qid -> nota (média das fontes, 1 casa). Filme sem valor válido não entra.
-export function calcularNotas(bindings) {
+// bindings do WDQS -> Map qid -> { nota (média das fontes, sem arredondar), fontes (quantas fontes válidas) }.
+export function calcularNotasBrutas(bindings) {
   const porFilme = new Map(); // qid -> Map fonte -> valores[]
   for (const b of bindings) {
     const qid = qidDe(b.film?.value);
@@ -55,9 +55,36 @@ export function calcularNotas(bindings) {
   const notas = new Map();
   for (const [qid, fontes] of porFilme) {
     const medias = [...fontes.values()].map((v) => v.reduce((a, c) => a + c, 0) / v.length);
-    notas.set(qid, arredondar1(medias.reduce((a, c) => a + c, 0) / medias.length));
+    notas.set(qid, { nota: medias.reduce((a, c) => a + c, 0) / medias.length, fontes: medias.length });
   }
   return notas;
+}
+
+// bindings do WDQS -> Map qid -> nota (média das fontes, 1 casa), sem suavização. Filme sem valor válido não entra.
+export function calcularNotas(bindings) {
+  return new Map([...calcularNotasBrutas(bindings)].map(([qid, { nota }]) => [qid, arredondar1(nota)]));
+}
+
+export const PESO_FONTE_UNICA = 0.75;
+
+// Filme de uma fonte só puxa para a média global M (média dos filmes de duas fontes; sem nenhum, de todos com nota):
+// nota = 0,75 x nota + 0,25 x M, 1 casa. Duas fontes ficam como estão (só arredondadas).
+export function suavizarNotas(brutas) {
+  const todas = [...brutas.values()];
+  const duas = todas.filter((b) => b.fontes >= 2);
+  const base = duas.length > 0 ? duas : todas;
+  const media = base.length > 0 ? base.reduce((a, b) => a + arredondar1(b.nota), 0) / base.length : 0;
+  const notas = new Map();
+  let fonteUnica = 0;
+  for (const [qid, b] of brutas) {
+    const n = arredondar1(b.nota);
+    if (b.fontes >= 2) notas.set(qid, n);
+    else {
+      notas.set(qid, arredondar1(PESO_FONTE_UNICA * n + (1 - PESO_FONTE_UNICA) * media));
+      fonteUnica += 1;
+    }
+  }
+  return { notas, mediaReferencia: Math.round(limpar(media) * 100) / 100, fonteUnica };
 }
 
 export function dividirEmLotes(qids, tamanho = TAMANHO_LOTE) {
@@ -105,11 +132,11 @@ export async function executarNotas({
       });
       bindings.push(...(dados?.results?.bindings ?? []));
     }
-    const notas = calcularNotas(bindings);
+    const { notas, mediaReferencia, fonteUnica } = suavizarNotas(calcularNotasBrutas(bindings));
     const filmes = dataset.filmes.map(({ nota: _antiga, ...resto }) => (notas.has(resto.qid) ? { ...resto, nota: notas.get(resto.qid) } : resto));
     const com = filmes.filter((f) => 'nota' in f).length;
     const saida = {
-      meta: { ...dataset.meta, notas: { com, total: filmes.length, geradoEm: relogio().toISOString() } },
+      meta: { ...dataset.meta, notas: { com, total: filmes.length, mediaReferencia, fonteUnica, geradoEm: relogio().toISOString() } },
       filmes,
     };
     const texto = JSON.stringify(saida);
@@ -120,7 +147,7 @@ export async function executarNotas({
     await gravar(texto);
     stdout(JSON.stringify({
       total: filmes.length, comNota: com, cobertura: Number((com / filmes.length).toFixed(4)),
-      distribuicao: distribuicao(filmes), lotes: lotes.length, bytes, duracaoMs: Math.round(agora() - inicio),
+      mediaReferencia, fonteUnica, distribuicao: distribuicao(filmes), lotes: lotes.length, bytes, duracaoMs: Math.round(agora() - inicio),
     }));
     return 0;
   } catch (erro) {

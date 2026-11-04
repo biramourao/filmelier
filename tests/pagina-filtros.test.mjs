@@ -31,7 +31,7 @@ test('página: fieldset Época com De e Até por década e Nota mínima, cada se
   assert.deepEqual(ate[0], ['', 'Qualquer']);
   assert.deepEqual(de.slice(1).map((o) => o[0]), ['1920', '1930', '1940', '1950', '1960', '1970', '1980', '1990', '2000', '2010', '2020']);
   assert.deepEqual(ate.slice(1).map((o) => o[0]), ['1929', '1939', '1949', '1959', '1969', '1979', '1989', '1999', '2009', '2019', '2029']);
-  assert.deepEqual(opcoes('nota-min'), [['', 'Qualquer'], ['6', '6+'], ['7', '7+'], ['8', '8+'], ['9', '9+']]);
+  assert.deepEqual(opcoes('nota-min'), [['', 'Qualquer'], ['5', '5+'], ['6', '6+'], ['7', '7+'], ['8', '8+'], ['9', '9+']]);
 });
 
 test('página: o fieldset de época vem depois do gênero e antes do botão; rodapé com o crédito das notas', () => {
