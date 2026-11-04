@@ -2,6 +2,7 @@
 // e do enriquecimento { idioma, sinopse, capaUrl, artigoUrl } ou null (placeholder).
 
 import { montarSecao } from './provedores.mjs';
+import { tagsDoCard } from './tags.mjs';
 
 export const ATRIBUTOS_LINK = Object.freeze({ target: '_blank', rel: 'noopener noreferrer' });
 export const URL_LICENCA = 'https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br';
@@ -26,7 +27,9 @@ export function montarSeloOscar({ oscarVitorias = 0, oscarIndicacoes = 0 } = {})
 
 // `provedores` (FILMELIER-3): null = recurso desligado (sem seção); { estado: 'buscando' } = lote em andamento;
 // entrada do cliente de provedores (ou SEM_ENTRADA) = estado final. A seção é sempre o último campo do card.
-export function montarCard(item, enriquecimento = null, provedores = null) {
+// `opcoesTags` (FILMELIER-4): { lista, incluir } com a lista de meta.temas.lista e as tags incluídas agora; null = sem tags.
+export function montarCard(item, enriquecimento = null, provedores = null, opcoesTags = null) {
+  const rotulosTags = opcoesTags ? tagsDoCard(item, opcoesTags) : [];
   const e = enriquecimento ?? {};
   const capa = e.capaUrl && e.artigoUrl
     ? { src: e.capaUrl, alt: '', width: 160, height: 240, loading: 'lazy', referrerPolicy: 'no-referrer' }
@@ -44,6 +47,7 @@ export function montarCard(item, enriquecimento = null, provedores = null) {
     ano: item.ano,
     generos: item.generos,
     notaTexto: typeof item.nota === 'number' ? `Nota ${item.nota.toFixed(1).replace('.', ',')}` : null,
+    tags: rotulosTags.length > 0 ? rotulosTags : null,
     oscar: montarSeloOscar(item),
     links: item.links,
     capa,

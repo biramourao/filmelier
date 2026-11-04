@@ -21,6 +21,11 @@
   --cor-placeholder-1: #f6d5b8;
   --cor-placeholder-2: #e9a97f;
   --cor-logo-borda: #8f7260;
+  --cor-tag-fundo: #ffffff;
+  --cor-tag-hover: #f6e6d8;
+  --cor-tag-incluida-fundo: #fbe3cf;
+  --cor-tag-excluida-fundo: #f6dcdc;
+  --cor-tag-card-fundo: #fbeee0;
 }
 
 *,
@@ -189,6 +194,7 @@ button:disabled {
 
 a:focus-visible,
 button:focus-visible,
+summary:focus-visible,
 select:focus-visible,
 input:focus-visible {
   outline: 3px solid var(--cor-foco);
@@ -212,6 +218,69 @@ a {
   background: var(--cor-erro-fundo);
   border-left: 4px solid var(--cor-erro-borda);
   border-radius: 0.5rem;
+}
+
+/* Tags de tema e clima (FILMELIER-4): grupo do formulário e chips. O estado ativo tem borda de 2px e sublinhado, além do fundo. */
+
+#grupo-temas {
+  margin-bottom: 1rem;
+}
+
+#grupo-temas summary {
+  min-height: 1.5rem;
+  padding: 0.5rem 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#temas-controles,
+#chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#chips {
+  margin: 0 0 1rem;
+}
+
+.tag-controle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  max-width: 100%;
+}
+
+.tag-controle button {
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  max-width: 100%;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--cor-texto);
+  background: var(--cor-tag-fundo);
+  border: 1px solid var(--cor-borda);
+}
+
+.tag-controle button:hover {
+  background: var(--cor-tag-hover);
+}
+
+.tag-controle button[aria-pressed="true"],
+.tag-controle button[aria-pressed="true"]:hover {
+  font-weight: 700;
+  color: var(--cor-texto);
+  background: var(--cor-tag-incluida-fundo);
+  border: 2px solid var(--cor-primaria);
+  text-decoration: underline;
+}
+
+.tag-controle button[data-acao="excluir"][aria-pressed="true"],
+.tag-controle button[data-acao="excluir"][aria-pressed="true"]:hover {
+  color: var(--cor-erro-texto);
+  background: var(--cor-tag-excluida-fundo);
+  border-color: var(--cor-erro-borda);
 }
 
 /* Lista e card */
@@ -284,6 +353,34 @@ a {
   margin: 0;
   font-size: 0.95rem;
   color: var(--cor-texto-secundario);
+}
+
+/* Tags do filme: lista de texto não interativa, depois da meta; a capa cobre a linha a mais quando ela existe. */
+.card:has(.tags-filme) .capa {
+  grid-row: 1 / span 3;
+}
+
+.card:has(.oscar):has(.tags-filme) .capa {
+  grid-row: 1 / span 4;
+}
+
+.card .tags-filme {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 2;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card .tags-filme li {
+  padding: 0.1rem 0.5rem;
+  font-size: 0.85rem;
+  color: var(--cor-texto-secundario);
+  background: var(--cor-tag-card-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
 }
 
 /* Selo do Oscar: linha própria depois da meta; a capa passa a cobrir as 3 linhas só quando o selo existe. */
@@ -466,6 +563,11 @@ a {
     grid-row: 1 / span 5;
   }
 
+  .card:has(.tags-filme) .capa,
+  .card:has(.oscar):has(.tags-filme) .capa {
+    grid-row: 1 / span 6;
+  }
+
   .sinopse-bloco,
   .credito-imagem,
   .card .links,
@@ -477,6 +579,16 @@ a {
 footer {
   font-size: 0.9rem;
   color: var(--cor-texto-secundario);
+}
+
+/* Logo oficial do TMDB (FILMELIER-4): 16 px de altura, menor que o nome do site; o link ocupa 24 px para o alvo de toque. */
+.logo-tmdb a {
+  display: inline-block;
+  padding: 0.25rem 0;
+}
+
+.logo-tmdb img {
+  display: block;
 }
 
 @media (prefers-reduced-motion: reduce) {

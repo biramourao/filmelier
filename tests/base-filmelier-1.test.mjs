@@ -30,7 +30,7 @@ test('AC-15: scripts/ idênticos aos da FILMELIER-1 (sha256 da base 1832cdf)', (
   for (const [rel, esperado] of Object.entries(HASHES)) assert.equal(sha(rel), esperado, rel);
 });
 
-const NOVOS = ['scripts/build-notas.mjs', 'scripts/lib/notas.mjs', 'scripts/build-oscar.mjs', 'scripts/lib/oscar.mjs'];
+const NOVOS = ['scripts/build-notas.mjs', 'scripts/lib/notas.mjs', 'scripts/build-oscar.mjs', 'scripts/lib/oscar.mjs', 'scripts/lib/temas.mjs', 'scripts/build-temas.mjs'];
 
 test('AC-15: scripts/ tem os arquivos da FILMELIER-1 mais só os dos builds de notas e de Oscar', () => {
   const lista = (dir) => readdirSync(join(raiz, dir), { withFileTypes: true })
@@ -40,9 +40,9 @@ test('AC-15: scripts/ tem os arquivos da FILMELIER-1 mais só os dos builds de n
 
 test('AC-15: filme do dataset sem campo de enriquecimento (esquema da FILMELIER-1)', () => {
   const dataset = JSON.parse(readFileSync(join(raiz, 'data/filmes.json'), 'utf8'));
-  const permitidos = new Set(['qid', 'titulo', 'ano', 'generos', 'sitelinks', 'imdb', 'nota', 'oscarVitorias', 'oscarIndicacoes']);
+  const permitidos = new Set(['qid', 'titulo', 'ano', 'generos', 'sitelinks', 'imdb', 'nota', 'oscarVitorias', 'oscarIndicacoes', 'tags', 'clima', 'tmdbId', 'tagsEm']);
   for (const f of dataset.filmes) {
     for (const campo of Object.keys(f)) assert.ok(permitidos.has(campo), `${f.qid}: ${campo}`);
   }
-  assert.deepEqual(Object.keys(dataset.meta).sort(), ['fonte', 'geradoEm', 'licenca', 'notas', 'oscar', 'total']);
+  assert.deepEqual(Object.keys(dataset.meta).sort(), ['fonte', 'geradoEm', 'licenca', 'notas', 'oscar', 'temas', 'total']);
 });

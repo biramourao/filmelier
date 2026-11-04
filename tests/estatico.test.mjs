@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync, statSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { join, relative } from 'node:path';
 import { cspEsperada } from './apoio/csp.mjs';
 import { validarUrlWorker } from '../src/provedores.mjs';
@@ -10,6 +11,9 @@ const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 // `.github` fica fora das varreduras de segredo: o workflow referencia o segredo por expressão do Actions (nunca o valor).
 // Ele tem teste próprio (tests/workflow-atualizar-base.test.mjs).
 const EXCLUIDOS = new Set(['.git', '.github', '.studioai', '.studio', 'openspec', 'node_modules', '.claude']);
+// FILMELIER-4 (D-11): nomes de entrada excluídos da busca por palavras; só estes 2 caminhos podem ter esses nomes.
+const EXCLUIDOS_TEMAS = ['temas.json', 'temas.mjs'];
+const CAMINHOS_TEMAS = ['data/temas.json', 'scripts/lib/temas.mjs'];
 
 // Lista arquivos recursivamente a partir de um caminho (arquivo ou diretório).
 function arquivos(caminho, excluidos = new Set()) {
@@ -48,10 +52,28 @@ test('AC-18: sem segredo no repositório, fora de .git, ledger e openspec', () =
   const semApiUrl = { test: (linha) => padrao.test(linha.replaceAll('url.' + 'pass' + 'word', '')) };
   // FILMELIER-3: `worker/` fica fora desta busca porque o Worker precisa montar o cabeçalho de autorização do TMDB
   // (palavras do padrão). Ele tem varredura própria de token literal (varrerTokens, mais abaixo).
-  assert.deepEqual(buscar(semApiUrl, ['.'], new Set([...EXCLUIDOS, 'filmes.json', 'worker'])), []);
+  // FILMELIER-4 (design D-11): `data/temas.json` e `scripts/lib/temas.mjs` ficam fora desta busca por nome de entrada.
+  // A tabela de temas tem keywords que casam o padrão desta busca e o módulo do build monta o cabeçalho de acesso
+  // ao TMDB (também palavra do padrão). Ambos têm varredura própria de token literal (varrerTokens em scripts/).
+  assert.deepEqual(buscar(semApiUrl, ['.'], new Set([...EXCLUIDOS, 'filmes.json', 'worker', ...EXCLUIDOS_TEMAS])), []);
   const dataset = JSON.parse(readFileSync(join(raiz, 'data/filmes.json'), 'utf8'));
   const semTitulos = JSON.stringify({ meta: dataset.meta, filmes: dataset.filmes.map(({ titulo, ...resto }) => resto) });
   assert.ok(!padrao.test(semTitulos));
+});
+
+test('AC-15: as exclusões por nome da busca de segredos casam só data/temas.json e scripts/lib/temas.mjs', () => {
+  const casados = arquivos(raiz, new Set([...EXCLUIDOS, 'node_modules']))
+    .map((a) => relative(raiz, a))
+    .filter((a) => EXCLUIDOS_TEMAS.includes(a.split('/').at(-1)));
+  assert.deepEqual(casados.filter((c) => !CAMINHOS_TEMAS.includes(c)), []);
+});
+
+test('AC-1: README.md tem a seção "Rotação da chave do TMDB" citando GitHub Actions e Cloudflare', () => {
+  const readme = readFileSync(join(raiz, 'README.md'), 'utf8');
+  assert.match(readme, /^## Rotação da chave do TMDB$/m);
+  const secao = readme.split('## Rotação da chave do TMDB')[1];
+  assert.ok(secao.includes('GitHub Actions'));
+  assert.ok(secao.includes('Cloudflare'));
 });
 
 test('AC-18: CSP default-src self declarada no index.html', () => {
@@ -315,6 +337,31 @@ test('AC-8: rodapé com o aviso exato do TMDB e links de nova aba com noopener e
   }
 });
 
+const estilosDoLogo = readFileSync(join(raiz, 'styles.css'), 'utf8');
+// FILMELIER-4 (D-15): logo oficial do TMDB, arquivo da própria origem, sem alteração do original.
+// Origem: https://www.themoviedb.org/assets/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg
+// (versão curta azul, da página https://www.themoviedb.org/about/logos-attribution, baixada em 2026-11-04).
+const SHA256_LOGO_TMDB = '8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c';
+
+test('AC-15: rodapé com o logo local do TMDB dentro do link oficial, altura menor que a do h1 e texto do aviso exato', () => {
+  const rodape = /<footer>([\s\S]*?)<\/footer>/.exec(html)[1];
+  const ancora = /<a\s[^>]*href="https:\/\/www\.themoviedb\.org\/"[^>]*>\s*(<img\s[^>]*>)\s*<\/a>/.exec(rodape);
+  assert.ok(ancora, 'img dentro do link para themoviedb.org');
+  assert.match(ancora[0], /target="_blank"/);
+  assert.match(ancora[0], /rel="noopener noreferrer"/);
+  const img = ancora[1];
+  const src = /src="([^"]+)"/.exec(img)[1];
+  assert.ok(!/^(https?:)?\/\//.test(src) && !src.startsWith('/'), 'src relativo');
+  assert.match(img, /alt="TMDB"/);
+  assert.equal(createHash('sha256').update(readFileSync(join(raiz, src))).digest('hex'), SHA256_LOGO_TMDB);
+  assert.ok(statSync(join(raiz, 'assets/tmdb-logo.svg')).size > 0);
+  const altura = Number(/height="(\d+)"/.exec(img)[1]);
+  const fonteH1 = Number(/h1\s*\{[^}]*font-size:\s*([\d.]+)rem/.exec(estilosDoLogo)[1]) * 16;
+  assert.ok(altura < fonteH1, `${altura} < ${fonteH1}`);
+  const texto = rodape.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  assert.ok(texto.includes('Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.'));
+});
+
 test('AC-13: src/ e index.html sem api.themoviedb.org nem TMDB_TOKEN', () => {
   assert.deepEqual(buscar(/api\.themoviedb\.org|TMDB_TOKEN/, ['src', 'index.html']), []);
 });
@@ -373,6 +420,11 @@ function varrerTokens(dir) {
 test('AC-13: worker/ não contém JWT, hexadecimal de 32 caracteres, chave na URL nem token atribuído no wrangler.toml', () => {
   assert.ok(arquivos(join(raiz, 'worker')).length >= 2);
   assert.deepEqual(varrerTokens(join(raiz, 'worker')), []);
+});
+
+test('AC-15: scripts/ também não contém JWT, hexadecimal de 32 caracteres nem chave na URL com valor (FILMELIER-4, D-11)', () => {
+  assert.ok(arquivos(join(raiz, 'scripts')).length >= 10);
+  assert.deepEqual(varrerTokens(join(raiz, 'scripts')), []);
 });
 
 test('AC-13: a varredura reprova fixtures com JWT, hexadecimal, chave na URL e token atribuído, fora de worker/', () => {

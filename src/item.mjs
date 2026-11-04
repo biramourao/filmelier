@@ -13,5 +13,7 @@ export function montarItem(filme, generos) {
   if (typeof filme.nota === 'number') item.nota = filme.nota;
   if (Number.isInteger(filme.oscarVitorias) && filme.oscarVitorias > 0) item.oscarVitorias = filme.oscarVitorias;
   if (Number.isInteger(filme.oscarIndicacoes) && filme.oscarIndicacoes > 0) item.oscarIndicacoes = filme.oscarIndicacoes;
+  if (Array.isArray(filme.tags) && filme.tags.length > 0) item.tags = filme.tags;
+  if (typeof filme.clima === 'string' && filme.clima !== '') item.clima = filme.clima;
   return item;
 }

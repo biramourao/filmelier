@@ -32,6 +32,9 @@ jobs:
             exit 1
           fi
 
+      - name: Guardar a base anterior
+        run: cp data/filmes.json "$RUNNER_TEMP/filmes-anterior.json"
+
       - name: Build do dataset
         run: node scripts/build-dataset.mjs
 
@@ -40,6 +43,12 @@ jobs:
 
       - name: Build do Oscar
         run: node scripts/build-oscar.mjs
+
+      - name: Build das tags de tema e clima
+        timeout-minutes: 40
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+        run: node scripts/build-temas.mjs --anterior "$RUNNER_TEMP/filmes-anterior.json"
 
       - name: Rodar a suíte de testes
         timeout-minutes: 10

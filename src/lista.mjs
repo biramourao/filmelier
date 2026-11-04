@@ -5,7 +5,10 @@ import { montarCard } from './card.mjs';
 import { montarItem } from './item.mjs';
 import { SEM_ENTRADA } from './provedores.mjs';
 
-export function criarSessaoLista({ enriquecedor, generos, aoAtualizar, provedores = null, aoProvedores = () => {} }) {
+// FILMELIER-4 (D-13): `lista` (de listaDeTags) e `incluirAtual` (devolve os ids incluídos agora) vão a montarCard; sem lista, card sem tags.
+export function criarSessaoLista({
+  enriquecedor, generos, aoAtualizar, provedores = null, aoProvedores = () => {}, lista = [], incluirAtual = () => [],
+}) {
   let geracao = 0;
   const comProvedores = provedores?.ativo === true;
 
@@ -18,6 +21,7 @@ export function criarSessaoLista({ enriquecedor, generos, aoAtualizar, provedore
 
   const montar = (filmes, mapa, mapaProv = null) => filmes.map((f) => montarCard(
     montarItem(f, generos), mapa?.get(f.qid) ?? null, estadoProvedores(f.qid, mapaProv),
+    lista.length > 0 ? { lista, incluir: incluirAtual() } : null,
   ));
 
   // Devolve de forma síncrona { geracao, cards, concluido, concluidoProvedores }: os cards já saem completos,

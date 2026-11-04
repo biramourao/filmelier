@@ -4,6 +4,10 @@ const MSG_NENHUM = 'Não encontramos filmes para essa combinação. Escolha outr
 
 const MSG_NENHUM_FILTROS = 'Nenhum filme com esses filtros. Tente ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
 
+const MSG_NENHUM_TAGS = 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "menos disso".';
+
+const MSG_NENHUM_TAGS_FILTROS = 'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "menos disso", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
+
 const definido = (v) => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
 
 // anoDe maior que anoAte é tratado como engano de ordem: os dois valores são trocados.
@@ -29,6 +33,25 @@ export function filtrarFilmes(filmes, filtros) {
     && (anoAte === null || f.ano <= anoAte)
     && (notaMin === null || (typeof f.nota === 'number' && f.nota >= notaMin))
     && (oscar === '' || (oscar === 'indicado' ? f.oscarIndicacoes > 0 : f.oscarVitorias > 0)));
+}
+
+// Tags (temas e climas) por id. Ids conhecidos: `tagsValidas` (ids de meta.temas.lista) ou, sem ela, os que aparecem em
+// `tags` ou `clima` de algum filme. Desconhecido é ignorado; id nas duas listas vale só como excluído.
+export function normalizarTags({ incluir = [], excluir = [], tagsValidas, filmes = [] } = {}) {
+  const conhecidos = tagsValidas
+    ? new Set(tagsValidas)
+    : new Set(filmes.flatMap((f) => [...(f.tags ?? []), ...(f.clima ? [f.clima] : [])]));
+  const unicos = (ids) => [...new Set((Array.isArray(ids) ? ids : []).filter((id) => conhecidos.has(id)))];
+  const fora = unicos(excluir);
+  return { incluir: unicos(incluir).filter((id) => !fora.includes(id)), excluir: fora };
+}
+
+const temTag = (f, id) => (f.tags ?? []).includes(id) || f.clima === id;
+
+// incluir: OU (no mínimo 1 id em tags ou clima); excluir: remove quem tem qualquer id. Sem tags ativas devolve o mesmo array.
+export function filtrarTags(filmes, { incluir = [], excluir = [] } = {}) {
+  if (incluir.length === 0 && excluir.length === 0) return filmes;
+  return filmes.filter((f) => !excluir.some((id) => temTag(f, id)) && (incluir.length === 0 || incluir.some((id) => temTag(f, id))));
 }
 
 function listaDeHumores(humores) {
@@ -71,10 +94,12 @@ function selecionar(elegiveis, rng, anteriores = []) {
 
 // Devolve { nivel, filmes, aviso, mensagem }. generoQid = null significa "Qualquer gênero".
 // Filtros de ano, nota e Oscar (anoDe, anoAte, notaMin, oscar) valem antes dos níveis de relaxamento, que operam sobre o conjunto filtrado.
-export function recomendar({ filmes: todos, humores, humorId, generoQid = null, rng, anteriores = [], anoDe = null, anoAte = null, notaMin = null, oscar = '' }) {
+export function recomendar({ filmes: todos, humores, humorId, generoQid = null, rng, anteriores = [], anoDe = null, anoAte = null, notaMin = null, oscar = '', incluir = [], excluir = [], tagsValidas }) {
   const filtros = normalizarFiltros({ anoDe, anoAte, notaMin, oscar });
   const comFiltros = filtros.anoDe !== null || filtros.anoAte !== null || filtros.notaMin !== null || filtros.oscar !== '';
-  const filmes = filtrarFilmes(todos, filtros);
+  const tags = normalizarTags({ incluir, excluir, tagsValidas, filmes: todos });
+  const comTags = tags.incluir.length > 0 || tags.excluir.length > 0;
+  const filmes = filtrarTags(filtrarFilmes(todos, filtros), tags);
   const humor = listaDeHumores(humores).find((h) => h.id === humorId);
   const qidsDoHumor = new Set(humor ? humor.generos.map((g) => g.qid) : []);
   const doHumor = filmes.filter((f) => f.generos.some((q) => qidsDoHumor.has(q)));
@@ -99,9 +124,10 @@ export function recomendar({ filmes: todos, humores, humorId, generoQid = null, 
     }
   }
   if (elegiveis.length === 0) {
-    return { nivel: 'nenhum', filmes: [], aviso: '', mensagem: comFiltros ? MSG_NENHUM_FILTROS : MSG_NENHUM };
+    const mensagem = comTags ? (comFiltros ? MSG_NENHUM_TAGS_FILTROS : MSG_NENHUM_TAGS) : (comFiltros ? MSG_NENHUM_FILTROS : MSG_NENHUM);
+    return { nivel: 'nenhum', filmes: [], aviso: '', mensagem, candidatos: [] };
   }
-  return { nivel, filmes: selecionar(elegiveis, rng, anteriores), aviso, mensagem: '' };
+  return { nivel, filmes: selecionar(elegiveis, rng, anteriores), aviso, mensagem: '', candidatos: conjuntoCandidato(elegiveis) };
 }
 
 // Gêneros distintos da tabela de humores, em ordem alfabética pt-BR.

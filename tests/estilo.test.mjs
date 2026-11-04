@@ -103,6 +103,49 @@ test('AC-8: pares de contraste da seção de provedores (cor nova do contorno do
   assert.equal(comDeclaracao.length, 1);
 });
 
+// FILMELIER-4: pares dos controles de tag e das tags do card (cores novas no bloco único de --cor-).
+const PARES_TAGS = [
+  ['--cor-texto', '--cor-tag-fundo', 4.5, 'texto'],
+  ['--cor-texto', '--cor-tag-hover', 4.5, 'texto'],
+  ['--cor-texto', '--cor-tag-incluida-fundo', 4.5, 'texto'],
+  ['--cor-erro-texto', '--cor-tag-excluida-fundo', 4.5, 'texto'],
+  ['--cor-texto-secundario', '--cor-tag-card-fundo', 4.5, 'texto'],
+  ['--cor-borda', '--cor-tag-fundo', 3, 'não texto'],
+  ['--cor-borda', '--cor-tag-card-fundo', 3, 'não texto'],
+  ['--cor-primaria', '--cor-tag-incluida-fundo', 3, 'não texto'],
+  ['--cor-erro-borda', '--cor-tag-excluida-fundo', 3, 'não texto'],
+  ['--cor-foco', '--cor-tag-fundo', 3, 'não texto'],
+];
+
+test('AC-16: pares de contraste dos controles de tag (texto 4,5 e não texto 3,0) e bloco único de --cor-', () => {
+  const v = variaveis();
+  for (const nova of ['--cor-tag-fundo', '--cor-tag-hover', '--cor-tag-incluida-fundo', '--cor-tag-excluida-fundo', '--cor-tag-card-fundo']) {
+    assert.ok(v[nova], nova);
+  }
+  for (const [frente, fundo, minimo, tipo] of PARES_TAGS) {
+    assert.ok(v[frente] && v[fundo], `${frente} / ${fundo}`);
+    const r = razao(v[frente], v[fundo]);
+    assert.ok(r >= minimo, `${tipo} ${frente} ${v[frente]} / ${fundo} ${v[fundo]}: ${r.toFixed(2)} < ${minimo}`);
+  }
+  assert.equal(todos.filter((b) => /--cor-[a-z0-9-]+\s*:/.test(b.corpo)).length, 1);
+});
+
+const emRem = (valor) => (/px$/.test(valor) ? parseFloat(valor) / 16 : parseFloat(valor));
+
+test('AC-16: [aria-pressed="true"] com borda e sublinhado, alvo de 1,5rem e flex-wrap nos chips', () => {
+  const pressionado = todos.find((b) => b.seletor.split(',').map((s) => s.trim()).includes('.tag-controle button[aria-pressed="true"]'));
+  assert.ok(pressionado);
+  assert.match(pressionado.corpo, /border:\s*2px solid/);
+  assert.match(pressionado.corpo, /text-decoration:\s*underline/);
+  assert.match(pressionado.corpo, /background:/);
+  const botao = todos.find((b) => b.seletor === '.tag-controle button');
+  const minH = /min-height:\s*([\d.]+(?:rem|px))/.exec(botao.corpo)?.[1];
+  const minW = /min-width:\s*([\d.]+(?:rem|px))/.exec(botao.corpo)?.[1];
+  assert.ok(minH && emRem(minH) >= 1.5 && minW && emRem(minW) >= 1.5);
+  const chips = todos.find((b) => b.seletor.split(',').map((s) => s.trim()).includes('#chips'));
+  assert.match(chips.corpo, /flex-wrap:\s*wrap/);
+});
+
 test('AC-12: razão de contraste calculada confere com a tabela de design D-9 (texto/fundo 12,74)', () => {
   assert.ok(Math.abs(razao('#3d2b1f', '#fff8ef') - 12.74) < 0.05);
 });

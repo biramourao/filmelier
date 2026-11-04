@@ -7,10 +7,13 @@ import { criarSessaoLista } from './lista.mjs';
 import { criarProvedores } from './provedores.mjs';
 import { URL_WORKER } from './config.mjs';
 import { inicializar } from './inicializar.mjs';
+import {
+  listaDeTags, alternar, filtroDoEstado, montarControle, montarControles, montarChips, textoTagsAtivas, alvoDoFoco,
+} from './tags.mjs';
 
 const el = (id) => document.getElementById(id);
 
-const estado = { humores: null, filmes: null, generos: [], anteriores: [], sessao: null };
+const estado = { humores: null, filmes: null, generos: [], anteriores: [], sessao: null, tags: new Map(), listaTags: [] };
 const enriquecedor = criarEnriquecedor({ fetchImpl: (url, opcoes) => fetch(url, opcoes), logger: console });
 const provedores = criarProvedores({ urlWorker: URL_WORKER, fetchImpl: (url, opcoes) => fetch(url, opcoes), logger: console });
 let contadorSinopse = 0;
@@ -35,6 +38,8 @@ function atualizarBotao() {
 function limparResultado() {
   estado.sessao?.invalidar();
   el('lista').replaceChildren();
+  el('chips').replaceChildren();
+  el('chips').hidden = true;
   el('resumo-lista').textContent = '';
   el('aviso').textContent = '';
   el('aviso').hidden = true;
@@ -63,6 +68,67 @@ function montarHumores(humores) {
 function montarGeneros(generos) {
   const select = el('genero');
   for (const g of generos) select.append(criar('option', g.rotulo, { value: g.qid }));
+}
+
+// Controle de uma tag (formulário e chips): botão do rótulo (inclui) e "Menos" (exclui), ambos com aria-pressed.
+function criarControleTag(controle) {
+  const caixa = criar('div', undefined, { class: 'tag-controle' });
+  for (const b of controle.botoes) {
+    const botao = criar('button', undefined, { type: 'button', 'aria-pressed': String(b.pressionado), 'data-tag': b.tag, 'data-acao': b.acao });
+    if (b.acao === 'excluir') botao.append('Menos', criar('span', ` ${controle.rotulo}`, { class: 'so-leitor' }));
+    else botao.textContent = b.texto;
+    caixa.append(botao);
+  }
+  return caixa;
+}
+
+// Formulário e chips mostram o mesmo estado: todo botão de tag segue o estado compartilhado.
+function sincronizarBotoesDeTag() {
+  for (const botao of document.querySelectorAll('button[data-tag]')) {
+    const alvo = botao.getAttribute('data-acao') === 'excluir' ? 'excluida' : 'incluida';
+    botao.setAttribute('aria-pressed', String(estado.tags.get(botao.getAttribute('data-tag')) === alvo));
+  }
+}
+
+function montarGrupoTemas() {
+  el('temas-controles').replaceChildren(...montarControles(estado.listaTags, estado.tags).map(criarControleTag));
+  el('grupo-temas').hidden = estado.listaTags.length === 0;
+}
+
+// Tag alterada pelo formulário: só muda o estado e limpa o resultado até novo "Recomendar".
+function alternarTagDoFormulario(id, acao) {
+  estado.tags = alternar(estado.tags, id, acao);
+  sincronizarBotoesDeTag();
+  limparResultado();
+  atualizarBotao();
+}
+
+// Chips acima da lista: tags ativas primeiro, depois as do conjunto candidato (src/tags.mjs); sem chip a área fica vazia e oculta.
+function desenharChips(resultado) {
+  const chips = montarChips({ candidatos: resultado.candidatos ?? [], estado: estado.tags, lista: estado.listaTags });
+  el('chips').replaceChildren(...chips.map((c) => {
+    const no = criarControleTag(montarControle({ id: c.id, rotulo: c.rotulo }, estado.tags));
+    no.classList.add('chip');
+    return no;
+  }));
+  el('chips').hidden = chips.length === 0;
+  return chips;
+}
+
+// Foco depois de refazer a lista: o mesmo botão; senão o 1º chip; senão "Recomendar".
+function focarDepoisDeRefazer(tag, acao) {
+  const botoes = [...el('chips').querySelectorAll('button')];
+  const alvo = alvoDoFoco({ chips: botoes.filter((b) => b.getAttribute('data-acao') === 'incluir').map((b) => ({ id: b.getAttribute('data-tag') })), tag, acao });
+  const procurar = (t, a) => botoes.find((b) => b.getAttribute('data-tag') === t && b.getAttribute('data-acao') === a);
+  (alvo.tipo === 'recomendar' ? el('recomendar') : procurar(alvo.tag, alvo.acao) ?? el('recomendar')).focus();
+}
+
+// Chip acionado: muda o estado e refaz a recomendação na hora (mesmo humor, gênero e filtros), sem "Recomendar".
+function alternarTagDoChip(id, acao) {
+  estado.tags = alternar(estado.tags, id, acao);
+  sincronizarBotoesDeTag();
+  sugerir(false);
+  focarDepoisDeRefazer(id, acao);
 }
 
 function criarLink(texto, href, atributosLink) {
@@ -167,6 +233,12 @@ function desenharItem(card, { reservar = false } = {}) {
   if (card.provedores) blocoTitulo.append(criar('p', undefined, { class: 'titulo-original', 'aria-hidden': 'true' }));
   li.append(blocoTitulo);
   li.append(criar('p', [`${card.ano} · ${card.generos.join(', ')}`, card.notaTexto].filter(Boolean).join(' · '), { class: 'meta' }));
+  // Tags do filme (FILMELIER-4): lista de texto não interativa, depois da linha de ano e gêneros e antes do selo do Oscar.
+  if (card.tags) {
+    const tags = criar('ul', undefined, { class: 'tags-filme', 'aria-label': 'Tags do filme' });
+    for (const rotulo of card.tags) tags.append(criar('li', rotulo));
+    li.append(tags);
+  }
   if (card.oscar) {
     const selo = criar('p', undefined, { class: 'oscar' });
     if (card.oscar.emoji) selo.append(criar('span', card.oscar.emoji, { class: 'emoji', 'aria-hidden': 'true' }));
@@ -249,8 +321,9 @@ function mostrar(resultado) {
   el('lista').replaceChildren(...cards.map((c) => desenharItem(c, { reservar: true })));
   // Região live curta (R-1): só a nova lista de títulos, nunca as sinopses.
   const lista = cards.length > 0 ? `${cards.length} ${cards.length === 1 ? 'sugestão' : 'sugestões'}: ${cards.map((c) => c.titulo).join(', ')}.` : '';
-  el('resumo-lista').textContent = [texto, lista].filter(Boolean).join(' ');
+  el('resumo-lista').textContent = [texto, textoTagsAtivas(estado.tags, estado.listaTags), lista].filter(Boolean).join(' ');
   estado.anteriores = resultado.filmes.map((f) => f.qid);
+  desenharChips(resultado);
   el('outras').hidden = resultado.nivel === 'nenhum';
   requestAnimationFrame(() => {
     performance.mark('filmelier:lista-renderizada');
@@ -285,6 +358,8 @@ function sugerir(comAnteriores) {
     ...filtrosDaPagina(),
     rng: Math.random,
     anteriores: comAnteriores ? estado.anteriores : [],
+    ...filtroDoEstado(estado.tags),
+    tagsValidas: estado.listaTags.map((t) => t.id),
   }));
 }
 
@@ -293,6 +368,10 @@ function entrarEmErro() {
   estado.humores = null;
   estado.filmes = null;
   estado.sessao = null;
+  estado.tags = new Map();
+  estado.listaTags = [];
+  el('temas-controles').replaceChildren();
+  el('grupo-temas').hidden = true;
   el('humores').replaceChildren();
   const select = el('genero');
   while (select.options.length > 1) select.remove(1);
@@ -310,9 +389,15 @@ function desenharPagina(dados) {
   estado.humores = dados.humores;
   estado.filmes = dados.filmes;
   estado.generos = listarGeneros(dados.humores);
+  // Sem filme com tags ou clima na base, a página funciona como antes das tags (sem grupo, chips nem seção no card).
+  const comTags = dados.filmes.filmes.some((f) => f.tags?.length > 0 || f.clima);
+  estado.tags = new Map();
+  estado.listaTags = comTags ? listaDeTags(dados.filmes.meta) : [];
   estado.sessao = criarSessaoLista({
     enriquecedor, generos: estado.generos, aoAtualizar: aplicarEnriquecimento, provedores, aoProvedores: aplicarProvedores,
+    lista: estado.listaTags, incluirAtual: () => filtroDoEstado(estado.tags).incluir,
   });
+  montarGrupoTemas();
   montarHumores(dados.humores);
   montarGeneros(estado.generos);
   el('data-geracao').textContent = formatarData(dados.filmes.meta.geradoEm);
@@ -335,6 +420,14 @@ el('formulario').addEventListener('submit', (evento) => {
   sugerir(false);
 });
 el('outras').addEventListener('click', () => sugerir(true));
+el('chips').addEventListener('click', (evento) => {
+  const botao = evento.target.closest('button[data-tag]');
+  if (botao && estado.humores && humorMarcado()) alternarTagDoChip(botao.getAttribute('data-tag'), botao.getAttribute('data-acao'));
+});
+el('temas-controles').addEventListener('click', (evento) => {
+  const botao = evento.target.closest('button[data-tag]');
+  if (botao) alternarTagDoFormulario(botao.getAttribute('data-tag'), botao.getAttribute('data-acao'));
+});
 el('formulario').addEventListener('change', () => {
   limparResultado();
   atualizarBotao();

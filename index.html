@@ -89,6 +89,14 @@
         </select>
       </div>
 
+      <details id="grupo-temas" hidden>
+        <summary>Filtrar por tema (opcional)</summary>
+        <fieldset>
+          <legend class="so-leitor">Temas (opcional)</legend>
+          <div id="temas-controles"></div>
+        </fieldset>
+      </details>
+
       <button type="submit" id="recomendar" disabled>Recomendar</button>
     </form>
 
@@ -97,6 +105,7 @@
     <section id="resultado">
       <p id="resumo-lista" class="so-leitor" aria-live="polite"></p>
       <p id="aviso" hidden></p>
+      <div id="chips" role="group" aria-label="Refinar por tema" hidden></div>
       <ul id="lista"></ul>
     </section>
 
@@ -111,6 +120,7 @@
     <p>Notas da crítica: Rotten Tomatoes e Metacritic via Wikidata (CC0)</p>
     <p>Oscar: dados do Wikidata (CC0)</p>
     <p>Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</p>
+    <p class="logo-tmdb"><a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer"><img src="assets/tmdb-logo.svg" alt="TMDB" width="123" height="16"></a></p>
   </footer>
 </body>
 </html>
