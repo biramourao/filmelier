@@ -18,11 +18,20 @@ test('AC-11: esquema de cada filme do dataset versionado', () => {
     assert.ok(f.generos.length >= 1 && f.generos.every((q) => qidsTabela.has(q)), f.qid);
     assert.ok(Number.isInteger(f.sitelinks) && f.sitelinks >= 0, f.qid);
     if ('imdb' in f) assert.match(f.imdb, /^tt\d+$/);
+    if ('nota' in f) assert.ok(typeof f.nota === 'number' && f.nota >= 0 && f.nota <= 10 && Math.round(f.nota * 10) / 10 === f.nota, `${f.qid} nota`);
   }
 });
 
 test('AC-11: sem QID repetido', () => {
   assert.equal(new Set(dataset.filmes.map((f) => f.qid)).size, dataset.filmes.length);
+});
+
+test('notas: meta.notas confere com a contagem de filmes com nota', () => {
+  const com = dataset.filmes.filter((f) => 'nota' in f).length;
+  assert.equal(dataset.meta.notas.com, com);
+  assert.equal(dataset.meta.notas.total, dataset.filmes.length);
+  assert.match(dataset.meta.notas.geradoEm, /^\d{4}-\d{2}-\d{2}T/);
+  assert.ok(com / dataset.filmes.length > 0.8);
 });
 
 test('AC-11: metadados do dataset', () => {

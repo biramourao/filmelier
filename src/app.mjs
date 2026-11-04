@@ -166,7 +166,7 @@ function desenharItem(card, { reservar = false } = {}) {
   blocoTitulo.append(criar('h2', card.titulo));
   if (card.provedores) blocoTitulo.append(criar('p', undefined, { class: 'titulo-original', 'aria-hidden': 'true' }));
   li.append(blocoTitulo);
-  li.append(criar('p', `${card.ano} · ${card.generos.join(', ')}`, { class: 'meta' }));
+  li.append(criar('p', [`${card.ano} · ${card.generos.join(', ')}`, card.notaTexto].filter(Boolean).join(' · '), { class: 'meta' }));
   if (card.sinopse) li.append(desenharSinopse(card));
   else if (reservar) li.append(reservaSinopse());
   if (card.creditoImagemUrl) li.append(desenharCreditoImagem(card));
@@ -260,6 +260,12 @@ function aplicarEnriquecimento(cards) {
   performance.measure('filmelier:enriquecimento', 'filmelier:recomendar-inicio', 'filmelier:enriquecimento-fim');
 }
 
+// Selects de Época e Nota mínima: value vazio = "Qualquer" (sem filtro).
+function filtrosDaPagina() {
+  const numero = (id) => (el(id).value === '' ? null : Number(el(id).value));
+  return { anoDe: numero('ano-de'), anoAte: numero('ano-ate'), notaMin: numero('nota-min') };
+}
+
 function sugerir(comAnteriores) {
   const humorId = humorMarcado();
   if (!humorId || !estado.humores) return;
@@ -270,6 +276,7 @@ function sugerir(comAnteriores) {
     humores: estado.humores,
     humorId,
     generoQid,
+    ...filtrosDaPagina(),
     rng: Math.random,
     anteriores: comAnteriores ? estado.anteriores : [],
   }));

@@ -25,6 +25,7 @@ export function montarCard(item, enriquecimento = null, provedores = null) {
     tituloOriginalTexto: tituloOriginal === null ? null : `Título original: ${tituloOriginal}`,
     ano: item.ano,
     generos: item.generos,
+    notaTexto: typeof item.nota === 'number' ? `Nota ${item.nota.toFixed(1).replace('.', ',')}` : null,
     links: item.links,
     capa,
     placeholder: capa === null,

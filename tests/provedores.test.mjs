@@ -519,11 +519,12 @@ test('AC-5: card em andamento e card sem dados', () => {
   assert.equal(montarCard(ITEM, null, SEM_ENTRADA).provedores.texto, 'Sem dados de onde assistir no Brasil');
 });
 
+// Ajuste dos filtros de ano e nota: o card ganhou `notaTexto` (logo após `generos`); o restante da ordem segue igual.
 test('AC-15: com URL vazia (provedores nulo) o card mantém a ordem da FILMELIER-2', () => {
   const card = montarCard(ITEM);
   assert.equal(card.provedores, null);
   assert.deepEqual(Object.keys(card).filter((k) => k !== 'provedores'), [
-    'titulo', 'tituloOriginal', 'tituloOriginalTexto', 'ano', 'generos', 'links', 'capa', 'placeholder', 'sinopse', 'marcaIdioma', 'lang', 'creditoTexto',
+    'titulo', 'tituloOriginal', 'tituloOriginalTexto', 'ano', 'generos', 'notaTexto', 'links', 'capa', 'placeholder', 'sinopse', 'marcaIdioma', 'lang', 'creditoTexto',
     'creditoUrl', 'licencaUrl', 'creditoImagemTexto', 'creditoImagemUrl', 'atributosLink',
   ]);
   assert.equal(montarCard(ITEM, null, null).provedores, null);

@@ -4,14 +4,16 @@ import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-// verificação da FILMELIER-2, base 1832cdf; atualizar ou remover quando o dataset for regenerado.
+// verificação da FILMELIER-2, base 1832cdf. Atualizada no ajuste dos filtros de ano e nota: o dataset foi refeito
+// com o campo opcional `nota` e `meta.notas` (scripts/build-notas.mjs); o hash de data/filmes.json é o do dataset com notas.
+// Os scripts da FILMELIER-1 seguem idênticos; os arquivos novos de notas não entram na lista de hashes.
 // Prova que a demanda não tocou o dataset nem o build (AC-15). Hash por bytes pressupõe fim de linha LF;
 // com core.autocrlf=true use `git diff --stat 1832cdf -- data/filmes.json scripts/` (deve sair vazio).
 const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const sha = (rel) => createHash('sha256').update(readFileSync(join(raiz, rel))).digest('hex');
 
 const HASHES = {
-  'data/filmes.json': 'addcfe602f83811b82cc3ca95afec3db82e87c815a2eb7ecfb47a30dc1082230',
+  'data/filmes.json': 'c091b55f838fa19795a8e821dbadb7106096ce99b66f822d9553f384190f0991',
   'scripts/build-dataset.mjs': '2e3d5f18dfd67cf2800524aefdb9ad9b9f6a4eabdafb9410ba54947348c0ed40',
   'scripts/lib/build.mjs': '7eb71a9e600232b4c48877b9e659cd8c73c4eceeed0c568f895831a33f9dea18',
   'scripts/lib/consulta.mjs': 'c0d09b9db76cb77d5d602902abd6f32f4dd9ee614725b5f67e794d77f97547b1',
@@ -25,17 +27,19 @@ test('AC-15: data/filmes.json e scripts/ idênticos aos da FILMELIER-1 (sha256 d
   for (const [rel, esperado] of Object.entries(HASHES)) assert.equal(sha(rel), esperado, rel);
 });
 
-test('AC-15: scripts/ tem exatamente os arquivos da FILMELIER-1', () => {
+const NOVOS = ['scripts/build-notas.mjs', 'scripts/lib/notas.mjs'];
+
+test('AC-15: scripts/ tem os arquivos da FILMELIER-1 mais só os do build de notas', () => {
   const lista = (dir) => readdirSync(join(raiz, dir), { withFileTypes: true })
     .flatMap((e) => (e.isDirectory() ? lista(join(dir, e.name)) : [join(dir, e.name)]));
-  assert.deepEqual(lista('scripts').sort(), Object.keys(HASHES).filter((k) => k.startsWith('scripts/')).sort());
+  assert.deepEqual(lista('scripts').sort(), [...Object.keys(HASHES).filter((k) => k.startsWith('scripts/')), ...NOVOS].sort());
 });
 
 test('AC-15: filme do dataset sem campo de enriquecimento (esquema da FILMELIER-1)', () => {
   const dataset = JSON.parse(readFileSync(join(raiz, 'data/filmes.json'), 'utf8'));
-  const permitidos = new Set(['qid', 'titulo', 'ano', 'generos', 'sitelinks', 'imdb']);
+  const permitidos = new Set(['qid', 'titulo', 'ano', 'generos', 'sitelinks', 'imdb', 'nota']);
   for (const f of dataset.filmes) {
     for (const campo of Object.keys(f)) assert.ok(permitidos.has(campo), `${f.qid}: ${campo}`);
   }
-  assert.deepEqual(Object.keys(dataset.meta).sort(), ['fonte', 'geradoEm', 'licenca', 'total']);
+  assert.deepEqual(Object.keys(dataset.meta).sort(), ['fonte', 'geradoEm', 'licenca', 'notas', 'total']);
 });

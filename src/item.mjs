@@ -9,5 +9,7 @@ export function montarItem(filme, generos) {
   if (filme.imdb) {
     links.push({ texto: 'IMDb', href: `https://www.imdb.com/title/${filme.imdb}/`, target: '_blank', rel: REL });
   }
-  return { titulo: filme.titulo, ano: String(filme.ano), generos: rotulos, links };
+  const item = { titulo: filme.titulo, ano: String(filme.ano), generos: rotulos, links };
+  if (typeof filme.nota === 'number') item.nota = filme.nota;
+  return item;
 }
