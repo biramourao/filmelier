@@ -2,25 +2,33 @@
 
 const MSG_NENHUM = 'Não encontramos filmes para essa combinação. Escolha outro humor ou gênero.';
 
-const MSG_NENHUM_FILTROS = 'Nenhum filme com esses filtros. Tente ampliar o período ou baixar a nota mínima.';
+const MSG_NENHUM_FILTROS = 'Nenhum filme com esses filtros. Tente ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
 
 const definido = (v) => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
 
 // anoDe maior que anoAte é tratado como engano de ordem: os dois valores são trocados.
-export function normalizarFiltros({ anoDe = null, anoAte = null, notaMin = null } = {}) {
+// oscar: '' (qualquer), 'indicado' ou 'vencedor'; qualquer outro valor vale como ''.
+export function normalizarFiltros({ anoDe = null, anoAte = null, notaMin = null, oscar = '' } = {}) {
   let de = definido(anoDe) ? Number(anoDe) : null;
   let ate = definido(anoAte) ? Number(anoAte) : null;
   if (de !== null && ate !== null && de > ate) [de, ate] = [ate, de];
-  return { anoDe: de, anoAte: ate, notaMin: definido(notaMin) ? Number(notaMin) : null };
+  return {
+    anoDe: de,
+    anoAte: ate,
+    notaMin: definido(notaMin) ? Number(notaMin) : null,
+    oscar: oscar === 'indicado' || oscar === 'vencedor' ? oscar : '',
+  };
 }
 
 // Filtros inclusivos e opcionais; com notaMin definido, filme sem nota fica de fora.
+// Oscar: 'indicado' exige oscarIndicacoes > 0; 'vencedor' exige oscarVitorias > 0.
 export function filtrarFilmes(filmes, filtros) {
-  const { anoDe, anoAte, notaMin } = normalizarFiltros(filtros);
-  if (anoDe === null && anoAte === null && notaMin === null) return filmes;
+  const { anoDe, anoAte, notaMin, oscar } = normalizarFiltros(filtros);
+  if (anoDe === null && anoAte === null && notaMin === null && oscar === '') return filmes;
   return filmes.filter((f) => (anoDe === null || f.ano >= anoDe)
     && (anoAte === null || f.ano <= anoAte)
-    && (notaMin === null || (typeof f.nota === 'number' && f.nota >= notaMin)));
+    && (notaMin === null || (typeof f.nota === 'number' && f.nota >= notaMin))
+    && (oscar === '' || (oscar === 'indicado' ? f.oscarIndicacoes > 0 : f.oscarVitorias > 0)));
 }
 
 function listaDeHumores(humores) {
@@ -62,10 +70,10 @@ function selecionar(elegiveis, rng, anteriores = []) {
 }
 
 // Devolve { nivel, filmes, aviso, mensagem }. generoQid = null significa "Qualquer gênero".
-// Filtros de ano e nota (anoDe, anoAte, notaMin) valem antes dos níveis de relaxamento, que operam sobre o conjunto filtrado.
-export function recomendar({ filmes: todos, humores, humorId, generoQid = null, rng, anteriores = [], anoDe = null, anoAte = null, notaMin = null }) {
-  const filtros = normalizarFiltros({ anoDe, anoAte, notaMin });
-  const comFiltros = filtros.anoDe !== null || filtros.anoAte !== null || filtros.notaMin !== null;
+// Filtros de ano, nota e Oscar (anoDe, anoAte, notaMin, oscar) valem antes dos níveis de relaxamento, que operam sobre o conjunto filtrado.
+export function recomendar({ filmes: todos, humores, humorId, generoQid = null, rng, anteriores = [], anoDe = null, anoAte = null, notaMin = null, oscar = '' }) {
+  const filtros = normalizarFiltros({ anoDe, anoAte, notaMin, oscar });
+  const comFiltros = filtros.anoDe !== null || filtros.anoAte !== null || filtros.notaMin !== null || filtros.oscar !== '';
   const filmes = filtrarFilmes(todos, filtros);
   const humor = listaDeHumores(humores).find((h) => h.id === humorId);
   const qidsDoHumor = new Set(humor ? humor.generos.map((g) => g.qid) : []);

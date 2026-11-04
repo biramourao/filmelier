@@ -18,6 +18,8 @@ test('AC-11: esquema de cada filme do dataset versionado', () => {
     assert.ok(f.generos.length >= 1 && f.generos.every((q) => qidsTabela.has(q)), f.qid);
     assert.ok(Number.isInteger(f.sitelinks) && f.sitelinks >= 0, f.qid);
     if ('imdb' in f) assert.match(f.imdb, /^tt\d+$/);
+    for (const campo of ['oscarVitorias', 'oscarIndicacoes']) if (campo in f) assert.ok(Number.isInteger(f[campo]) && f[campo] > 0, `${f.qid} ${campo}`);
+    if ('oscarVitorias' in f) assert.ok(f.oscarIndicacoes >= f.oscarVitorias, `${f.qid} indicações >= vitórias`);
     if ('nota' in f) assert.ok(typeof f.nota === 'number' && f.nota >= 0 && f.nota <= 10 && Math.round(f.nota * 10) / 10 === f.nota, `${f.qid} nota`);
   }
 });
@@ -32,6 +34,15 @@ test('notas: meta.notas confere com a contagem de filmes com nota', () => {
   assert.equal(dataset.meta.notas.total, dataset.filmes.length);
   assert.match(dataset.meta.notas.geradoEm, /^\d{4}-\d{2}-\d{2}T/);
   assert.ok(com / dataset.filmes.length > 0.8);
+});
+
+test('oscar: meta.oscar confere com a contagem de filmes com indicação e com vitória', () => {
+  const { oscar } = dataset.meta;
+  assert.equal(oscar.comIndicacao, dataset.filmes.filter((f) => 'oscarIndicacoes' in f).length);
+  assert.equal(oscar.comVitoria, dataset.filmes.filter((f) => 'oscarVitorias' in f).length);
+  assert.equal(oscar.total, dataset.filmes.length);
+  assert.match(oscar.geradoEm, /^\d{4}-\d{2}-\d{2}T/);
+  assert.ok(oscar.comIndicacao > 0 && oscar.comVitoria > 0 && oscar.comVitoria <= oscar.comIndicacao);
 });
 
 test('AC-11: metadados do dataset', () => {

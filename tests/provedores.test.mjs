@@ -524,7 +524,7 @@ test('AC-15: com URL vazia (provedores nulo) o card mantém a ordem da FILMELIER
   const card = montarCard(ITEM);
   assert.equal(card.provedores, null);
   assert.deepEqual(Object.keys(card).filter((k) => k !== 'provedores'), [
-    'titulo', 'tituloOriginal', 'tituloOriginalTexto', 'ano', 'generos', 'notaTexto', 'links', 'capa', 'placeholder', 'sinopse', 'marcaIdioma', 'lang', 'creditoTexto',
+    'titulo', 'tituloOriginal', 'tituloOriginalTexto', 'ano', 'generos', 'notaTexto', 'oscar', 'links', 'capa', 'placeholder', 'sinopse', 'marcaIdioma', 'lang', 'creditoTexto',
     'creditoUrl', 'licencaUrl', 'creditoImagemTexto', 'creditoImagemUrl', 'atributosLink',
   ]);
   assert.equal(montarCard(ITEM, null, null).provedores, null);

@@ -286,6 +286,25 @@ a {
   color: var(--cor-texto-secundario);
 }
 
+/* Selo do Oscar: linha própria depois da meta; a capa passa a cobrir as 3 linhas só quando o selo existe. */
+.card:has(.oscar) .capa {
+  grid-row: 1 / span 3;
+}
+
+.card .oscar {
+  grid-column: 2;
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--cor-primaria-escura);
+}
+
+.card .oscar .emoji {
+  margin-right: 0.35rem;
+  font-size: 1rem;
+  vertical-align: baseline;
+}
+
 .sinopse-bloco,
 .credito-imagem,
 .card .links {

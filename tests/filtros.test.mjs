@@ -9,12 +9,12 @@ const COMEDIA = 'Q157443';
 const ANIMACAO = 'Q202866';
 const TERROR = 'Q200092';
 const MUSICAL = 'Q842256';
-const MSG = 'Nenhum filme com esses filtros. Tente ampliar o período ou baixar a nota mínima.';
+const MSG = 'Nenhum filme com esses filtros. Tente ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
 
 let n = 5000;
-function filme(generos, ano, nota, sitelinks = 50) {
+function filme(generos, ano, nota, sitelinks = 50, oscar = {}) {
   n += 1;
-  const f = { qid: `Q${n}`, titulo: `F${n}`, ano, generos, sitelinks };
+  const f = { qid: `Q${n}`, titulo: `F${n}`, ano, generos, sitelinks, ...oscar };
   if (nota !== undefined) f.nota = nota;
   return f;
 }
@@ -34,7 +34,7 @@ test('ano: só anoDe ou só anoAte', () => {
 });
 
 test('ano: anoDe maior que anoAte é tratado como engano e os valores são trocados', () => {
-  assert.deepEqual(normalizarFiltros({ anoDe: 1999, anoAte: 1990 }), { anoDe: 1990, anoAte: 1999, notaMin: null });
+  assert.deepEqual(normalizarFiltros({ anoDe: 1999, anoAte: 1990 }), { anoDe: 1990, anoAte: 1999, notaMin: null, oscar: '' });
   const f = [filme([ANIMACAO], 1985), filme([ANIMACAO], 1995)];
   const r = chamar(f, 'leve', null, { anoDe: 1999, anoAte: 1990 });
   assert.deepEqual(r.filmes.map((x) => x.ano), [1995]);
@@ -92,4 +92,31 @@ test('máximo 5, sem repetição, top 40 por sitelinks dentro do filtrado e ante
   for (const x of r.filmes) assert.ok(top.has(x.qid));
   const r2 = chamar(f, 'leve', null, { ...extra, anteriores: r.filmes.map((x) => x.qid) });
   assert.equal(r2.filmes.filter((x) => r.filmes.some((y) => y.qid === x.qid)).length, 0);
+});
+
+test('oscar: normalização aceita só indicado e vencedor; o resto vale como qualquer', () => {
+  assert.equal(normalizarFiltros({ oscar: 'indicado' }).oscar, 'indicado');
+  assert.equal(normalizarFiltros({ oscar: 'vencedor' }).oscar, 'vencedor');
+  for (const v of ['', undefined, null, 'x', 1]) assert.equal(normalizarFiltros({ oscar: v }).oscar, '');
+});
+
+test('oscar: indicado exige oscarIndicacoes > 0 e vencedor exige oscarVitorias > 0', () => {
+  const sem = filme([ANIMACAO], 1990);
+  const indicado = filme([ANIMACAO], 1990, undefined, 50, { oscarIndicacoes: 3 });
+  const vencedor = filme([ANIMACAO], 1990, undefined, 50, { oscarVitorias: 1, oscarIndicacoes: 4 });
+  const todos = [sem, indicado, vencedor];
+  assert.deepEqual(filtrarFilmes(todos, { oscar: '' }).map((x) => x.qid), todos.map((x) => x.qid));
+  assert.deepEqual(filtrarFilmes(todos, { oscar: 'indicado' }).map((x) => x.qid), [indicado.qid, vencedor.qid]);
+  assert.deepEqual(filtrarFilmes(todos, { oscar: 'vencedor' }).map((x) => x.qid), [vencedor.qid]);
+});
+
+test('oscar: combina com época e nota antes do relaxamento e zera com a mensagem dos filtros', () => {
+  const alvo = filme([ANIMACAO], 2005, 8.5, 50, { oscarIndicacoes: 2 });
+  const velho = filme([ANIMACAO], 1950, 9, 50, { oscarVitorias: 2, oscarIndicacoes: 2 });
+  const baixa = filme([ANIMACAO], 2005, 5, 50, { oscarIndicacoes: 2 });
+  const r = chamar([alvo, velho, baixa, filme([ANIMACAO], 2005, 9)], 'leve', null, { anoDe: 2000, anoAte: 2009, notaMin: 8, oscar: 'indicado' });
+  assert.deepEqual(r.filmes.map((x) => x.qid), [alvo.qid]);
+  const vazio = chamar([alvo, baixa], 'leve', null, { oscar: 'vencedor' });
+  assert.equal(vazio.nivel, 'nenhum');
+  assert.equal(vazio.mensagem, MSG);
 });

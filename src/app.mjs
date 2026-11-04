@@ -155,7 +155,7 @@ function conteudoProvedores(secao) {
   return [rotuloAtribuicao, ...categorias];
 }
 
-// Ordem do card (design D-11): capa, título, meta, sinopse com crédito, crédito da imagem, links e, só com o
+// Ordem do card (design D-11): capa, título, meta, selo do Oscar (se houver), sinopse com crédito, crédito da imagem, links e, só com o
 // Worker configurado, a seção de provedores (FILMELIER-3).
 function desenharItem(card, { reservar = false } = {}) {
   // Com o Worker ligado o título pt-BR pode chegar depois: o bloco do título reserva 2 linhas e a linha do título
@@ -167,6 +167,12 @@ function desenharItem(card, { reservar = false } = {}) {
   if (card.provedores) blocoTitulo.append(criar('p', undefined, { class: 'titulo-original', 'aria-hidden': 'true' }));
   li.append(blocoTitulo);
   li.append(criar('p', [`${card.ano} · ${card.generos.join(', ')}`, card.notaTexto].filter(Boolean).join(' · '), { class: 'meta' }));
+  if (card.oscar) {
+    const selo = criar('p', undefined, { class: 'oscar' });
+    if (card.oscar.emoji) selo.append(criar('span', card.oscar.emoji, { class: 'emoji', 'aria-hidden': 'true' }));
+    selo.append(criar('span', card.oscar.texto));
+    li.append(selo);
+  }
   if (card.sinopse) li.append(desenharSinopse(card));
   else if (reservar) li.append(reservaSinopse());
   if (card.creditoImagemUrl) li.append(desenharCreditoImagem(card));
@@ -260,10 +266,10 @@ function aplicarEnriquecimento(cards) {
   performance.measure('filmelier:enriquecimento', 'filmelier:recomendar-inicio', 'filmelier:enriquecimento-fim');
 }
 
-// Selects de Época e Nota mínima: value vazio = "Qualquer" (sem filtro).
+// Selects de Época, Nota mínima e Oscar: value vazio = "Qualquer" (sem filtro).
 function filtrosDaPagina() {
   const numero = (id) => (el(id).value === '' ? null : Number(el(id).value));
-  return { anoDe: numero('ano-de'), anoAte: numero('ano-ate'), notaMin: numero('nota-min') };
+  return { anoDe: numero('ano-de'), anoAte: numero('ano-ate'), notaMin: numero('nota-min'), oscar: el('oscar').value };
 }
 
 function sugerir(comAnteriores) {

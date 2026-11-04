@@ -6,6 +6,24 @@ import { montarSecao } from './provedores.mjs';
 export const ATRIBUTOS_LINK = Object.freeze({ target: '_blank', rel: 'noopener noreferrer' });
 export const URL_LICENCA = 'https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br';
 
+// Troféu do selo do Oscar. Montado pelo código do ponto: src/ não pode ter caractere pictográfico literal
+// (tests/emoji-src.test.mjs), e o emoji é decoração (vai em span aria-hidden).
+const TROFEU = String.fromCodePoint(0x1F3C6);
+
+const plural = (n, singular, pluralTexto) => `${n} ${n === 1 ? singular : pluralTexto}`;
+
+// Selo do Oscar: { emoji, texto } ou null. Com vitória: "Venceu N Oscar(s) · indicado em M categoria(s)";
+// só indicado: "Indicado em M categoria(s) do Oscar". O texto é o mesmo com ou sem o emoji.
+export function montarSeloOscar({ oscarVitorias = 0, oscarIndicacoes = 0 } = {}) {
+  const indicacoes = Math.max(oscarIndicacoes, oscarVitorias);
+  if (!(indicacoes > 0)) return null;
+  const categorias = plural(indicacoes, 'categoria', 'categorias');
+  if (oscarVitorias > 0) {
+    return { emoji: TROFEU, texto: `Venceu ${plural(oscarVitorias, 'Oscar', 'Oscars')} · indicado em ${categorias}` };
+  }
+  return { emoji: null, texto: `Indicado em ${categorias} do Oscar` };
+}
+
 // `provedores` (FILMELIER-3): null = recurso desligado (sem seção); { estado: 'buscando' } = lote em andamento;
 // entrada do cliente de provedores (ou SEM_ENTRADA) = estado final. A seção é sempre o último campo do card.
 export function montarCard(item, enriquecimento = null, provedores = null) {
@@ -26,6 +44,7 @@ export function montarCard(item, enriquecimento = null, provedores = null) {
     ano: item.ano,
     generos: item.generos,
     notaTexto: typeof item.nota === 'number' ? `Nota ${item.nota.toFixed(1).replace('.', ',')}` : null,
+    oscar: montarSeloOscar(item),
     links: item.links,
     capa,
     placeholder: capa === null,

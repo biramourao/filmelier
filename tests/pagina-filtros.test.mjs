@@ -45,3 +45,32 @@ test('app: filtros lidos dos selects e enviados ao recomendar; mudança no formu
   assert.match(app, /\.\.\.filtrosDaPagina\(\)/);
   assert.match(app, /addEventListener\('change', \(\) => \{\s*limparResultado\(\)/);
 });
+
+test('página: select Oscar com label[for] junto da Nota mínima; rodapé com o crédito do Oscar', () => {
+  assert.match(html, /<label for="oscar">Oscar<\/label>/);
+  assert.deepEqual(opcoes('oscar'), [['', 'Qualquer'], ['indicado', 'Indicado'], ['vencedor', 'Vencedor']]);
+  const i = (t) => html.indexOf(t);
+  assert.ok(i('id="nota-min"') < i('id="oscar"') && i('id="oscar"') < i('id="recomendar"'));
+  assert.match(html, /Oscar: dados do Wikidata \(CC0\)/);
+  assert.match(app, /oscar: el\('oscar'\)\.value/);
+});
+
+test('card: selo do Oscar com singular e plural; sem Oscar não há selo', () => {
+  const selo = (o) => montarCard(montarItem({ ...base, ...o }, generos)).oscar;
+  assert.equal(selo({ oscarVitorias: 1, oscarIndicacoes: 7 }).texto, 'Venceu 1 Oscar · indicado em 7 categorias');
+  assert.equal(selo({ oscarVitorias: 3, oscarIndicacoes: 9 }).texto, 'Venceu 3 Oscars · indicado em 9 categorias');
+  assert.equal(selo({ oscarVitorias: 1, oscarIndicacoes: 1 }).texto, 'Venceu 1 Oscar · indicado em 1 categoria');
+  assert.equal(selo({ oscarIndicacoes: 1 }).texto, 'Indicado em 1 categoria do Oscar');
+  assert.equal(selo({ oscarIndicacoes: 6 }).texto, 'Indicado em 6 categorias do Oscar');
+  assert.equal(selo({ oscarVitorias: 2, oscarIndicacoes: 6 }).emoji, '\u{1F3C6}');
+  assert.equal(selo({ oscarIndicacoes: 6 }).emoji, null);
+  assert.equal(selo({}), null);
+  assert.equal(selo({ oscarVitorias: 0, oscarIndicacoes: 0 }), null);
+});
+
+test('app: selo em linha própria depois da meta, emoji só em span aria-hidden e texto sem o emoji', () => {
+  assert.ok(app.indexOf("class: 'oscar'") > app.indexOf("class: 'meta'"));
+  assert.ok(app.indexOf("class: 'oscar'") < app.indexOf('desenharSinopse(card)'));
+  assert.match(app, /criar\('span', card\.oscar\.emoji, \{ class: 'emoji', 'aria-hidden': 'true' \}\)/);
+  assert.match(app, /criar\('span', card\.oscar\.texto\)/);
+});

@@ -11,5 +11,7 @@ export function montarItem(filme, generos) {
   }
   const item = { titulo: filme.titulo, ano: String(filme.ano), generos: rotulos, links };
   if (typeof filme.nota === 'number') item.nota = filme.nota;
+  if (Number.isInteger(filme.oscarVitorias) && filme.oscarVitorias > 0) item.oscarVitorias = filme.oscarVitorias;
+  if (Number.isInteger(filme.oscarIndicacoes) && filme.oscarIndicacoes > 0) item.oscarIndicacoes = filme.oscarIndicacoes;
   return item;
 }
