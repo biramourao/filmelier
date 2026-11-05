@@ -80,7 +80,7 @@ describe('AC-10: controles da tabela D-9', () => {
 
   test('rodapé: links e textos da tabela', async () => {
     await abrir(false);
-    expect(screen.getByRole('link', { name: 'Dados de filmes: Wikidata (CC0)' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Dados de filmes e séries: Wikidata (CC0)' })).toBeTruthy();
     expect(screen.getByText('Notas da crítica: Rotten Tomatoes e Metacritic via Wikidata (CC0)')).toBeTruthy();
     expect(screen.getByText('Oscar: dados do Wikidata (CC0)')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'TMDB' })).toBeTruthy();

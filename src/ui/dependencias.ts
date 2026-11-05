@@ -1,4 +1,4 @@
-import { carregarDados } from '../dados.mjs';
+import { carregarDados, carregarSeries } from '../dados.mjs';
 import { recomendar } from '../recomendar.mjs';
 import { criarEnriquecedor } from '../enriquecer.mjs';
 import { criarProvedores } from '../provedores.mjs';
@@ -18,9 +18,11 @@ export interface Logger {
 export interface Dependencias {
   // Nunca rejeita: devolve { humores, filmes, erro } (ver src/dados.mjs).
   carregarDados: () => Promise<any>;
+  // Carga sob demanda da aba Séries (FILMELIER-6): mesmo contrato, devolve { humores, series, erro }.
+  carregarSeries: () => Promise<any>;
   recomendar: (parametros: any) => any;
   criarEnriquecedor: () => any;
-  criarProvedores: () => any;
+  criarProvedores: (tipo?: 'filme' | 'serie') => any;
   urlWorker: string;
   logger: Logger;
   performance: Pick<Performance, 'mark' | 'measure'>;
@@ -32,9 +34,10 @@ export function dependenciasReais(): Dependencias {
   const fetchImpl = (url: string, opcoes?: RequestInit) => fetch(url, opcoes);
   return {
     carregarDados: () => carregarDados(fetchImpl, console),
+    carregarSeries: () => carregarSeries(fetchImpl, console),
     recomendar: recomendarJs,
     criarEnriquecedor: () => fabricaEnriquecedor({ fetchImpl, logger: console }),
-    criarProvedores: () => fabricaProvedores({ urlWorker: URL_WORKER, fetchImpl, logger: console }),
+    criarProvedores: (tipo = 'filme') => fabricaProvedores({ urlWorker: URL_WORKER, fetchImpl, logger: console, tipo }),
     urlWorker: URL_WORKER,
     logger: console,
     performance,

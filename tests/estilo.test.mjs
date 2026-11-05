@@ -172,3 +172,22 @@ test('AC-12: foco visível com outline-offset de no mínimo 2px e sem fonte exte
   assert.ok(m && Number(m[1]) >= 2);
   assert.doesNotMatch(css, /@import|@font-face|fonts\.googleapis/);
 });
+
+// FILMELIER-6 (D-9): pares das abas e da linha de situação (tabela própria; os 32 pares acima não mudam).
+// Texto 4,5; indicador da aba ativa (não texto) 3.
+const PARES_ABAS = [
+  ['--cor-texto', '--cor-fundo', 4.5, 'texto da aba ativa'],
+  ['--cor-texto-secundario', '--cor-fundo', 4.5, 'texto da aba inativa'],
+  ['--cor-primaria', '--cor-fundo', 3, 'indicador da aba ativa'],
+  ['--cor-texto-secundario', '--cor-superficie', 4.5, 'texto da situação no card'],
+];
+
+test('FILMELIER-6: Pares de contraste novos das abas e da situação, sem variável nova', () => {
+  const v = variaveis();
+  for (const [frente, fundo, minimo, tipo] of PARES_ABAS) {
+    assert.ok(v[frente] && v[fundo], `${frente} / ${fundo}`);
+    const r = razao(v[frente], v[fundo]);
+    assert.ok(r >= minimo, `${tipo} ${frente} ${v[frente]} / ${fundo} ${v[fundo]}: ${r.toFixed(2)} < ${minimo}`);
+  }
+  assert.equal(todos.filter((b) => /--cor-[a-z0-9-]+\s*:/.test(b.corpo)).length, 1);
+});

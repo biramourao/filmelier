@@ -48,7 +48,9 @@ const JSON_CABECALHO = { 'Content-Type': 'application/json' };
 const origensPermitidas = (env) => String(env?.ORIGENS_PERMITIDAS ?? '').split(',').map((o) => o.trim()).filter((o) => o !== '');
 
 // `qids`: 1 a 5 QIDs ^Q\d+$ sem repetição, obrigatório. `imdb`: opcional (vazio = ausente), pares QID:ttNNNNNNN(N)
-// de QIDs presentes em `qids`, no máximo 1 vez cada. Devolve { qids, imdb: Map } ou null (400).
+// de QIDs presentes em `qids`, no máximo 1 vez cada. `tipo` (FILMELIER-6, D-5): ausente, vazio ou `filme` = filme (o
+// `tmdb` é ignorado); `serie` exige `tmdb` com 1 ID de TV ^[1-9]\d{0,9}$ por QID, na mesma ordem; outro valor = 400.
+// Devolve { qids, imdb: Map, tipo, tmdb: Map QID -> ID (só em série) } ou null (400).
 function lerParametros(busca) {
   const bruto = busca.get('qids');
   if (bruto === null || bruto === '') return null;
@@ -63,7 +65,16 @@ function lerParametros(busca) {
       imdb.set(m[1], m[2]);
     }
   }
-  return { qids, imdb };
+  const brutoTipo = busca.get('tipo');
+  const tipo = brutoTipo === null || brutoTipo === '' ? 'filme' : brutoTipo;
+  if (tipo !== 'filme' && tipo !== 'serie') return null;
+  const tmdb = new Map();
+  if (tipo === 'serie') {
+    const ids = (busca.get('tmdb') ?? '').split(',');
+    if (ids.length !== qids.length || ids.some((i) => !/^[1-9]\d{0,9}$/.test(i))) return null;
+    qids.forEach((q, i) => tmdb.set(q, Number(ids[i])));
+  }
+  return { qids, imdb, tipo, tmdb };
 }
 
 export function criarWorker({
@@ -143,17 +154,28 @@ export function criarWorker({
     return { ...montarEntrada(r.json), ...titulos };
   }
 
-  // Cache do isolate: chave QID|IMDb informado, valor { entrada, gravadoEm }, válido por TTL_S comparado aqui.
+  // Série (FILMELIER-6, D-5): o site já manda o ID de TV; 1 chamada a /tv/{id}/watch/providers, sem /find e sem títulos.
+  // HTTP 404 vira `sem-tmdb`; 429 e os demais erros seguem as regras dos filmes.
+  async function resolverSerie(ctx, qid) {
+    const r = await chamarTmdb(ctx, `/tv/${ctx.tmdb.get(qid)}/watch/providers`);
+    if (r.limite) return { status: 'limite' };
+    if (r.status === 404) return { status: 'sem-tmdb' };
+    if (!r.ok) return { status: 'erro' };
+    return montarEntrada(r.json);
+  }
+
+  // Cache do isolate: chave QID|IMDb informado (filme) ou serie|QID|ID de TV (série), valor { entrada, gravadoEm }, válido por TTL_S comparado aqui.
   // Só `ok`, `sem-br` e `sem-tmdb` são guardados; `erro` nunca, e nada depois do prazo da requisição.
   async function resolverComCache(ctx, qid) {
     if (!ctx.token) return { status: 'erro' }; // sem TMDB_TOKEN nenhuma chamada é feita
-    const chave = `${qid}|${ctx.imdb.get(qid) ?? ''}`;
+    const serie = ctx.tipo === 'serie';
+    const chave = serie ? `serie|${qid}|${ctx.tmdb.get(qid)}` : `${qid}|${ctx.imdb.get(qid) ?? ''}`;
     const guardado = cache.get(chave);
     if (guardado && agora() - guardado.gravadoEm <= TTL_S * 1000) {
       ctx.acertosCache += 1;
       return guardado.entrada;
     }
-    const entrada = await resolverQid(ctx, qid);
+    const entrada = await (serie ? resolverSerie(ctx, qid) : resolverQid(ctx, qid));
     if (!ctx.fechado && (entrada.status === 'ok' || entrada.status === 'sem-br' || entrada.status === 'sem-tmdb')) {
       cache.delete(chave); // reinsere no fim: a ordem de inserção do Map é a ordem de idade
       cache.set(chave, { entrada, gravadoEm: agora() });
@@ -174,7 +196,7 @@ export function criarWorker({
     const cors = { 'Access-Control-Allow-Origin': origem, Vary: 'Origin', 'Access-Control-Expose-Headers': 'Retry-After' };
     const parametros = lerParametros(url.searchParams);
     if (parametros === null) return recusar(400, 'parametros', cors);
-    const ctx = { token: env?.TMDB_TOKEN, imdb: parametros.imdb, chamadasTmdb: 0, acertosCache: 0, fechado: false };
+    const ctx = { token: env?.TMDB_TOKEN, imdb: parametros.imdb, tipo: parametros.tipo, tmdb: parametros.tmdb, chamadasTmdb: 0, acertosCache: 0, fechado: false };
     const finais = new Map();
     const trabalho = Promise.all(parametros.qids.map(async (q) => {
       const entrada = await resolverComCache(ctx, q);
@@ -186,6 +208,7 @@ export function criarWorker({
     ctx.fechado = true;
     const resultados = Object.fromEntries(parametros.qids.map((q) => [q, finais.get(q) ?? { status: 'erro' }]));
     info.qids = parametros.qids;
+    if (parametros.tipo === 'serie') info.tipo = 'serie';
     info.status = Object.fromEntries(parametros.qids.map((q) => [q, resultados[q].status]));
     info.acertosCache = ctx.acertosCache;
     info.chamadasTmdb = ctx.chamadasTmdb;
@@ -220,10 +243,12 @@ export function criarWorker({
     } catch {
       resposta = erroInterno(request, env);
     }
-    logger.log(JSON.stringify({
+    const linha = {
       http: resposta.status, qids: info.qids, status: info.status,
       acertosCache: info.acertosCache, chamadasTmdb: info.chamadasTmdb, duracaoMs: agora() - inicio,
-    }));
+    };
+    if (info.tipo === 'serie') linha.tipo = 'serie'; // só em requisição de série aceita; a de filme segue com 6 chaves
+    logger.log(JSON.stringify(linha));
     return resposta;
   }
 

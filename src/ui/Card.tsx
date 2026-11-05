@@ -8,7 +8,7 @@ interface Props {
   agendarQuadro: (retorno: () => void) => void;
 }
 
-// Card do filme (D-5). Ordem fixa: capa, título, meta, tags, selo do Oscar, sinopse com crédito, crédito da imagem, links e provedores.
+// Card do filme ou da série (D-5; FILMELIER-6, D-8). Ordem fixa: capa, título, meta, linha da série, tags, selo do Oscar, sinopse com crédito, crédito da imagem, links e provedores.
 // Cada bloco mantém o mesmo tipo de elemento na mesma posição entre o estado reservado e o preenchido; o `key` é o qid
 // (posto por quem renderiza a lista), então o enriquecimento e os provedores reconciliam o mesmo `li`.
 export function Card({ card, enriquecido, agendarQuadro }: Props) {
@@ -34,13 +34,15 @@ export function Card({ card, enriquecido, agendarQuadro }: Props) {
       {/* Com o Worker ligado o título pt-BR pode chegar depois: a linha do título original fica sempre presente. */}
       <div className="bloco-titulo">
         <h2>{card.titulo}</h2>
-        {card.provedores && (
+        {(card.provedores || card.tituloOriginalTexto) && (
           <p className="titulo-original" aria-hidden={card.tituloOriginalTexto ? undefined : 'true'}>{card.tituloOriginalTexto ?? ''}</p>
         )}
       </div>
       <p className="meta">{meta}</p>
+      {/* Série (FILMELIER-6): situação, temporadas e episódios em texto visível, logo depois dos anos e gêneros. */}
+      {card.linhaSerie && <p className="linha-serie">{card.linhaSerie}</p>}
       {card.tags && (
-        <ul className="tags-filme" aria-label="Tags do filme">
+        <ul className="tags-filme" aria-label={card.rotuloTags ?? 'Tags do filme'}>
           {card.tags.map((rotulo: string) => <li key={rotulo}>{rotulo}</li>)}
         </ul>
       )}

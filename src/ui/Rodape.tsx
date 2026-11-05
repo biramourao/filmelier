@@ -4,7 +4,7 @@ export function Rodape({ data }: { data: string }) {
   return (
     <footer>
       <p>
-        <a href="https://www.wikidata.org/" target="_blank" rel="noopener noreferrer">Dados de filmes: Wikidata (CC0)</a>
+        <a href="https://www.wikidata.org/" target="_blank" rel="noopener noreferrer">Dados de filmes e séries: Wikidata (CC0)</a>
         {' '}— gerado em <span id="data-geracao">{data}</span>
       </p>
       <p>Notas da crítica: Rotten Tomatoes e Metacritic via Wikidata (CC0)</p>

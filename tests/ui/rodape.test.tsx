@@ -16,9 +16,9 @@ describe('AC-9: rodapé', () => {
   test('Wikidata (CC0) com "gerado em" e a data da fixture, em link de nova aba', async () => {
     const { container } = await abrir();
     const rodape = container.querySelector('footer')!;
-    const link = within(rodape, 'Dados de filmes: Wikidata (CC0)');
+    const link = within(rodape, 'Dados de filmes e séries: Wikidata (CC0)');
     expect(link.getAttribute('href')).toBe('https://www.wikidata.org/');
-    expect(rodape.querySelector('p')?.textContent).toBe('Dados de filmes: Wikidata (CC0) — gerado em 04/11/2026');
+    expect(rodape.querySelector('p')?.textContent).toBe('Dados de filmes e séries: Wikidata (CC0) — gerado em 04/11/2026');
   });
 
   test('atribuições de Rotten Tomatoes e Metacritic, do Oscar e o aviso exato do TMDB', async () => {

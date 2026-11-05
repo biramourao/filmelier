@@ -31,3 +31,16 @@ test('AC-15: README mantém a seção "Rotação da chave do TMDB" e não diz ma
   assert.doesNotMatch(readme, /sem dependências e sem etapa de build/);
   assert.doesNotMatch(readme, /Não há dependências npm/);
 });
+
+// FILMELIER-6 (AC-17): o README descreve a aba Séries, o build, o job semanal, o parâmetro do Worker e o passo manual.
+test('AC-17: Textos exigidos no README', () => {
+  for (const texto of ['build-series', 'tipo=serie', 'wrangler deploy', 'atualizar-series']) assert.ok(readme.includes(texto), texto);
+  assert.match(readme, /^## Rotação da chave do TMDB$/m);
+  assert.match(readme, /^## Séries$/m);
+  const secao = readme.split('## Séries')[1].split('\n## ')[0];
+  assert.match(secao, /Sem nota e sem prêmio/);
+  assert.match(secao, /tmdb=/);
+  assert.match(secao, /Origin: https:\/\/biramourao\.github\.io/);
+  assert.match(secao, /\.series\[:5\]/);
+  assert.doesNotMatch(readme, /\b(pago|pagamento|assinatura do serviço|plano pago)\b/i);
+});

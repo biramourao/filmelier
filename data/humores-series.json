@@ -1,0 +1,25 @@
+{
+  "humores": [
+    { "id": "leve", "rotulo": "Leve e engraçado", "emoji": "😂", "generos": [
+      { "qid": "Q9335576", "rotulo": "Comédia" },
+      { "qid": "Q170238", "rotulo": "Sitcom" },
+      { "qid": "Q859369", "rotulo": "Comédia dramática" } ] },
+    { "id": "tenso", "rotulo": "Tenso, quero adrenalina", "emoji": "⚡", "generos": [
+      { "qid": "Q343782", "rotulo": "Ação" },
+      { "qid": "Q67175872", "rotulo": "Suspense" },
+      { "qid": "Q9335577", "rotulo": "Crime" } ] },
+    { "id": "emocionar", "rotulo": "Quero me emocionar", "emoji": "😢", "generos": [
+      { "qid": "Q1366112", "rotulo": "Drama" },
+      { "qid": "Q84270297", "rotulo": "Romance" } ] },
+    { "id": "pensar", "rotulo": "Quero pensar", "emoji": "🤔", "generos": [
+      { "qid": "Q140472311", "rotulo": "Ficção científica" },
+      { "qid": "Q101898470", "rotulo": "Mistério" } ] },
+    { "id": "medo", "rotulo": "Quero sentir medo", "emoji": "👻", "generos": [
+      { "qid": "Q20220309", "rotulo": "Terror" } ] },
+    { "id": "aventura", "rotulo": "Quero aventura e fantasia", "emoji": "🐉", "generos": [
+      { "qid": "Q56064758", "rotulo": "Aventura" },
+      { "qid": "Q98526245", "rotulo": "Fantasia" } ] },
+    { "id": "familia", "rotulo": "Aconchegante, para ver em família", "emoji": "🏡", "generos": [
+      { "qid": "Q1273568", "rotulo": "Infantil" } ] }
+  ]
+}

@@ -6,8 +6,12 @@ import { montarItem } from './item.mjs';
 import { SEM_ENTRADA } from './provedores.mjs';
 
 // FILMELIER-4 (D-13): `lista` (de listaDeTags) e `incluirAtual` (devolve os ids incluídos agora) vão a montarCard; sem lista, card sem tags.
+// FILMELIER-6 (D-7): `montarCardDe(item, enriquecimento, provedores, opcoesTags)` e `itemDoLote(item)` generalizam o card e o
+// item enviado ao cliente de provedores; os padrões são o código de filmes de sempre (séries passam montarCardSerie e o tmdb).
 export function criarSessaoLista({
   enriquecedor, generos, aoAtualizar, provedores = null, aoProvedores = () => {}, lista = [], incluirAtual = () => [],
+  montarCardDe = (f, enriquecimento, estado, opcoesTags) => montarCard(montarItem(f, generos), enriquecimento, estado, opcoesTags),
+  itemDoLote = (f) => ({ qid: f.qid, imdb: f.imdb ?? null }),
 }) {
   let geracao = 0;
   const comProvedores = provedores?.ativo === true;
@@ -19,8 +23,8 @@ export function criarSessaoLista({
     return mapaProv.get(qid) ?? SEM_ENTRADA;
   };
 
-  const montar = (filmes, mapa, mapaProv = null) => filmes.map((f) => montarCard(
-    montarItem(f, generos), mapa?.get(f.qid) ?? null, estadoProvedores(f.qid, mapaProv),
+  const montar = (filmes, mapa, mapaProv = null) => filmes.map((f) => montarCardDe(
+    f, mapa?.get(f.qid) ?? null, estadoProvedores(f.qid, mapaProv),
     lista.length > 0 ? { lista, incluir: incluirAtual() } : null,
   ));
 
@@ -44,7 +48,7 @@ export function criarSessaoLista({
       () => {},
     );
     const concluidoProvedores = comProvedores
-      ? provedores.buscar(filmes.map((f) => ({ qid: f.qid, imdb: f.imdb ?? null }))).then(
+      ? provedores.buscar(filmes.map(itemDoLote)).then(
         (mapa) => {
           if (minha !== geracao) return;
           mapaProv = mapa;

@@ -11,8 +11,8 @@ const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 // Ele tem teste próprio (tests/workflow-atualizar-base.test.mjs).
 const EXCLUIDOS = new Set(['.git', '.github', '.studioai', '.studio', 'openspec', 'node_modules', 'dist', '.claude']);
 // FILMELIER-4 (D-11): nomes de entrada excluídos da busca por palavras; só estes 2 caminhos podem ter esses nomes.
-const EXCLUIDOS_TEMAS = ['temas.json', 'temas.mjs'];
-const CAMINHOS_TEMAS = ['data/temas.json', 'scripts/lib/temas.mjs'];
+const EXCLUIDOS_TEMAS = ['temas.json', 'temas.mjs', 'series-tmdb.mjs', 'series.json'];
+const CAMINHOS_TEMAS = ['data/temas.json', 'scripts/lib/temas.mjs', 'scripts/lib/series-tmdb.mjs', 'data/series.json'];
 
 // Lista arquivos recursivamente a partir de um caminho (arquivo ou diretório).
 function arquivos(caminho, excluidos = new Set()) {
@@ -58,6 +58,10 @@ test('AC-18: sem segredo no repositório, fora de .git, ledger e openspec', () =
   const dataset = JSON.parse(readFileSync(join(raiz, 'data/filmes.json'), 'utf8'));
   const semTitulos = JSON.stringify({ meta: dataset.meta, filmes: dataset.filmes.map(({ titulo, ...resto }) => resto) });
   assert.ok(!padrao.test(semTitulos));
+  // FILMELIER-6 (D-13): data/series.json também tem títulos livres; só `meta` e os campos sem título entram na busca.
+  const base = JSON.parse(readFileSync(join(raiz, 'data/series.json'), 'utf8'));
+  const semTitulosSeries = JSON.stringify({ meta: base.meta, series: base.series.map(({ titulo, tituloOriginal, ...resto }) => resto) });
+  assert.ok(!padrao.test(semTitulosSeries));
 });
 
 test('AC-15: as exclusões por nome da busca de segredos casam só data/temas.json e scripts/lib/temas.mjs', () => {
