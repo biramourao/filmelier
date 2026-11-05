@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const yml = readFileSync(new URL('../.github/workflows/atualizar-base.yml', import.meta.url), 'utf8');
+// FILMELIER-6 (design D-10, D-14 a): o workflow ganhou o job `atualizar-series`. As asserções de `git add`, do segredo
+// do TMDB e de `continue-on-error` valem para o bloco do job `atualizar` (do `  atualizar:` até `  atualizar-series:`),
+// com as mesmas expectativas de antes; as regras do job de séries estão em tests/workflow-series.test.mjs.
+const jobAtualizar = yml.slice(yml.indexOf('\n  atualizar:'), yml.indexOf('\n  atualizar-series:'));
 
 test('workflow: agenda semanal na quinta e disparo manual', () => {
   assert.match(yml, /cron: '0 9 \* \* 4'/);
@@ -28,7 +32,7 @@ test('workflow: 4 builds na ordem, suíte antes do commit, e só data/filmes.jso
   assert.ok(ordem.every((n) => n >= 0));
   assert.deepEqual([...ordem].sort((a, b) => a - b), ordem);
   assert.ok(i('git diff --quiet -- data/filmes.json') < i('git add'));
-  assert.deepEqual(yml.match(/git add .*/g), ['git add -- data/filmes.json']);
+  assert.deepEqual(jobAtualizar.match(/git add .*/g), ['git add -- data/filmes.json']);
   assert.match(yml, /actions\/checkout@v4/);
   assert.match(yml, /node-version: 24/);
 });
@@ -53,15 +57,16 @@ test('AC-9: passo de tags com timeout de 40 min e job com 60', () => {
 });
 
 test('AC-1: segredo do TMDB declarado 1 vez, só no bloco do passo de tags, sem echo e fora do env do job', () => {
-  assert.equal(yml.split(SEGREDO_TMDB).length - 1, 1);
+  assert.equal(jobAtualizar.split(SEGREDO_TMDB).length - 1, 1);
   assert.ok(blocoTags().includes(SEGREDO_TMDB));
-  const envJob = /\n    env:\n((?:      .*\n)+)/.exec(yml)[1];
+  const envJob = /\n    env:\n((?:      .*\n)+)/.exec(jobAtualizar)[1];
   assert.ok(!envJob.includes('TMDB'));
   assert.doesNotMatch(yml, /echo[^\n]*TMDB_TOKEN/);
 });
 
-test('AC-1: sem pull_request, pull_request_target nem continue-on-error', () => {
-  assert.doesNotMatch(yml, /pull_request|continue-on-error/);
+test('AC-1: sem pull_request, pull_request_target nem continue-on-error no job de filmes', () => {
+  assert.doesNotMatch(yml, /pull_request/);
+  assert.doesNotMatch(jobAtualizar, /continue-on-error/);
 });
 
 // FILMELIER-5 (DECISION.md D-D): a parte "package.json sem dependencies" saiu daqui; a política de

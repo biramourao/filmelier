@@ -683,6 +683,136 @@ footer {
   display: block;
 }
 
+/* Séries (FILMELIER-6, D-9): abas Filmes/Séries, linha de situação do card e cópias das regras por id para os ids com o prefixo
+   `series-`. Só regras novas, só tokens existentes; nenhuma regra acima foi editada (testes de CSS prendem os ids atuais). */
+
+.abas {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+/* As 2 abas dividem a largura (lado a lado em 360 px). A aba ativa se distingue por borda inferior de 3px, peso da fonte e cor
+   do texto, não só por cor. */
+.abas [role="tab"] {
+  flex: 1 1 0;
+  min-width: 1.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 400;
+  color: var(--cor-texto-secundario);
+  background: none;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0.5rem;
+}
+
+.abas [role="tab"]:hover:not(:disabled) {
+  color: var(--cor-texto);
+  background: var(--cor-superficie);
+  box-shadow: none;
+  transform: none;
+}
+
+.abas [role="tab"][aria-selected="true"] {
+  font-weight: 700;
+  color: var(--cor-texto);
+  border-bottom: 3px solid var(--cor-primaria);
+}
+
+.abas [role="tab"]:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 3px;
+}
+
+/* Linha de situação, temporadas e episódios: altura reservada para a linha não deslocar o layout. Sem estilo por situação:
+   a situação é texto visível, não cor. */
+.linha-serie {
+  min-height: 1.5rem;
+  color: var(--cor-texto-secundario);
+}
+
+.card .linha-serie {
+  grid-column: 2;
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+}
+
+.card:has(.linha-serie) .capa {
+  grid-row: 1 / span 3;
+}
+
+.card:has(.linha-serie):has(.tags-filme) .capa {
+  grid-row: 1 / span 4;
+}
+
+#series-humores {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.5rem;
+  min-height: 23.4rem;
+}
+
+@media (min-width: 32.6rem) {
+  #series-humores {
+    min-height: 13.75rem;
+  }
+}
+
+@media (min-width: 47.2rem) {
+  #series-humores {
+    min-height: 10.4rem;
+  }
+}
+
+#series-aviso {
+  padding: 0.5rem 0.75rem;
+  background: var(--cor-aviso-fundo);
+  border-left: 4px solid var(--cor-aviso-borda);
+  border-radius: 0.5rem;
+}
+
+#series-erro {
+  padding: 0.5rem 0.75rem;
+  color: var(--cor-erro-texto);
+  background: var(--cor-erro-fundo);
+  border-left: 4px solid var(--cor-erro-borda);
+  border-radius: 0.5rem;
+}
+
+#series-grupo-temas {
+  margin-bottom: 1rem;
+}
+
+#series-grupo-temas summary {
+  min-height: 1.5rem;
+  padding: 0.5rem 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#series-temas-controles,
+#series-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#series-chips {
+  margin: 0 0 1rem;
+}
+
+#series-chips .legenda-tags {
+  margin: 0;
+}
+
+#series-lista {
+  padding: 0;
+  list-style: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

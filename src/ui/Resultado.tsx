@@ -10,19 +10,20 @@ interface Props {
   itens: ReactNode;
   mostrarOutras: boolean;
   aoOutras: () => void;
+  prefixo?: string;
 }
 
 // Região de resultado. Nenhum ancestral da lista tem aria-live; só o resumo curto é região live.
-export function Resultado({ resumo, aviso, chips, itens, mostrarOutras, aoOutras }: Props) {
+export function Resultado({ resumo, aviso, chips, itens, mostrarOutras, aoOutras, prefixo = '' }: Props) {
   return (
     <>
-      <section id="resultado">
-        <p id="resumo-lista" className="so-leitor" aria-live="polite">{resumo}</p>
-        {aviso !== '' && <p id="aviso">{aviso}</p>}
+      <section id={`${prefixo}resultado`}>
+        <p id={`${prefixo}resumo-lista`} className="so-leitor" aria-live="polite">{resumo}</p>
+        {aviso !== '' && <p id={`${prefixo}aviso`}>{aviso}</p>}
         {chips}
-        <ul id="lista">{itens}</ul>
+        <ul id={`${prefixo}lista`}>{itens}</ul>
       </section>
-      <button type="button" id="outras" hidden={!mostrarOutras} onClick={aoOutras}>Outras sugestões</button>
+      <button type="button" id={`${prefixo}outras`} hidden={!mostrarOutras} onClick={aoOutras}>Outras sugestões</button>
     </>
   );
 }

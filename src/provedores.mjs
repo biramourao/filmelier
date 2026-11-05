@@ -17,13 +17,22 @@ export function validarUrlWorker(valor) {
 const IMDB = /^tt\d{7,8}$/;
 
 // GET {worker}/providers?qids=Q1,Q2&imdb=Q1:tt... (design D-3). `filmes` = [{ qid, imdb }]; imdb só com par válido.
-export function montarUrlLote(urlWorker, filmes) {
+// FILMELIER-6 (D-6): com tipo 'serie' a URL ganha, depois de qids e imdb, `tipo=serie` e `tmdb` (o ID de TV de cada item,
+// na ordem de `qids`; `itens` = [{ qid, imdb, tmdb }]). Com 'filme' (padrão) o código é o de sempre.
+export function montarUrlLote(urlWorker, filmes, tipo = 'filme') {
   const params = new URLSearchParams();
   params.set('qids', filmes.map((fi) => fi.qid).join(','));
   const pares = filmes.filter((fi) => typeof fi.imdb === 'string' && IMDB.test(fi.imdb)).map((fi) => `${fi.qid}:${fi.imdb}`);
   if (pares.length > 0) params.set('imdb', pares.join(','));
+  if (tipo === 'serie') {
+    params.set('tipo', 'serie');
+    params.set('tmdb', filmes.map((fi) => fi.tmdb).join(','));
+  }
   return `${urlWorker}/providers?${params.toString()}`;
 }
+
+// ID de TV do TMDB: inteiro positivo.
+const tmdbValido = (fi) => Number.isInteger(fi?.tmdb) && fi.tmdb > 0;
 
 const SUSPENSAO_PADRAO_S = 30;
 const SUSPENSAO_MAXIMA_S = 300;
@@ -71,7 +80,8 @@ const normalizarProvedor = (p) => ({
 });
 
 // Cliente do Worker: cache da aba e chamadas em voo (D-5). `buscar(filmes)` sempre resolve (nunca rejeita)
-// com Map QID -> entrada normalizada ou null (sem dados). `filmes` = [{ qid, imdb }].
+// com Map QID -> entrada normalizada ou null (sem dados). `filmes` = [{ qid, imdb }] (em série, + `tmdb`: o item sem
+// `tmdb` inteiro positivo não entra no lote e resolve null; sem nenhum item com `tmdb`, 0 chamadas).
 export function criarProvedores({
   urlWorker,
   fetchImpl,
@@ -79,6 +89,7 @@ export function criarProvedores({
   criarSinal = (ms) => AbortSignal.timeout(ms),
   logger = console,
   timeoutMs = 5000,
+  tipo = 'filme',
 } = {}) {
   const ativo = avaliarUrlWorker(urlWorker, logger);
   const cache = new Map();
@@ -99,7 +110,7 @@ export function criarProvedores({
 
   async function consultarLote(filmes) {
     const resultado = new Map(filmes.map((fi) => [fi.qid, null]));
-    const r = await buscarJson(montarUrlLote(urlWorker, filmes), { fetchImpl, criarSinal, timeoutMs });
+    const r = await buscarJson(montarUrlLote(urlWorker, filmes, tipo), { fetchImpl, criarSinal, timeoutMs });
     const qids = filmes.map((fi) => fi.qid);
     if (!r.ok) {
       logger.warn('[filmelier] provedores falhou', { fonte: 'provedores', qids, motivo: r.motivo });
@@ -128,9 +139,10 @@ export function criarProvedores({
   }
 
   async function buscar(filmes) {
-    const unicos = [...new Map(filmes.map((fi) => [fi.qid, fi])).values()];
-    const resposta = new Map(unicos.map((fi) => [fi.qid, null]));
+    const todos = [...new Map(filmes.map((fi) => [fi.qid, fi])).values()];
+    const resposta = new Map(todos.map((fi) => [fi.qid, null]));
     if (!ativo) return resposta;
+    const unicos = tipo === 'serie' ? todos.filter(tmdbValido) : todos;
     // Suspenso: nenhum lote novo; o cache e as chamadas já em voo ainda valem.
     const novos = suspenso() ? [] : unicos.filter((fi) => !cache.has(fi.qid) && !emVoo.has(fi.qid));
     const esperar = new Set(unicos.filter((fi) => !cache.has(fi.qid) && emVoo.has(fi.qid)).map((fi) => emVoo.get(fi.qid)));

@@ -30,7 +30,8 @@ test('AC-15: scripts/ idênticos aos da FILMELIER-1 (sha256 da base 1832cdf)', (
   for (const [rel, esperado] of Object.entries(HASHES)) assert.equal(sha(rel), esperado, rel);
 });
 
-const NOVOS = ['scripts/build-notas.mjs', 'scripts/lib/notas.mjs', 'scripts/build-oscar.mjs', 'scripts/lib/oscar.mjs', 'scripts/lib/temas.mjs', 'scripts/build-temas.mjs'];
+const NOVOS = ['scripts/build-notas.mjs', 'scripts/lib/notas.mjs', 'scripts/build-oscar.mjs', 'scripts/lib/oscar.mjs', 'scripts/lib/temas.mjs', 'scripts/build-temas.mjs',
+  'scripts/lib/series-tmdb.mjs', 'scripts/lib/series.mjs', 'scripts/build-series.mjs'];
 
 test('AC-15: scripts/ tem os arquivos da FILMELIER-1 mais só os dos builds de notas e de Oscar', () => {
   const lista = (dir) => readdirSync(join(raiz, dir), { withFileTypes: true })

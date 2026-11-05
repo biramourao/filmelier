@@ -7,12 +7,13 @@ interface Props {
   chips: { id: string; rotulo: string }[];
   tags: Map<string, string>;
   aoAcionar: (tag: string, acao: string) => void;
+  prefixo?: string;
 }
 
 // Chips acima da lista (D-6): sem chip o grupo fica vazio e oculto.
-export function Chips({ chips, tags, aoAcionar }: Props) {
+export function Chips({ chips, tags, aoAcionar, prefixo = '' }: Props) {
   return (
-    <div id="chips" role="group" aria-label="Refinar por tema" hidden={chips.length === 0}>
+    <div id={`${prefixo}chips`} role="group" aria-label="Refinar por tema" hidden={chips.length === 0}>
       {chips.length > 0 && <LegendaTags />}
       {chips.map((c) => <ControleTag key={c.id} chip controle={montarControle({ id: c.id, rotulo: c.rotulo }, tags)} aoAcionar={aoAcionar} />)}
     </div>

@@ -1,12 +1,14 @@
 // Lógica pura de recomendação (sem DOM). Ver design.md D3.
 
-const MSG_NENHUM = 'Não encontramos filmes para essa combinação. Escolha outro humor ou gênero.';
-
-const MSG_NENHUM_FILTROS = 'Nenhum filme com esses filtros. Tente ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
-
-const MSG_NENHUM_TAGS = 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "não quero".';
-
-const MSG_NENHUM_TAGS_FILTROS = 'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "não quero", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
+// Textos de resultado vazio e `itens` dos avisos de relaxamento de gênero. Filmes é o padrão; séries passam os próprios
+// (src/serie.mjs, FILMELIER-6).
+export const TEXTOS_FILMES = Object.freeze({
+  nenhum: 'Não encontramos filmes para essa combinação. Escolha outro humor ou gênero.',
+  nenhumFiltros: 'Nenhum filme com esses filtros. Tente ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.',
+  nenhumTags: 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "não quero".',
+  nenhumTagsFiltros: 'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "não quero", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.',
+  itens: 'filmes',
+});
 
 const definido = (v) => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
 
@@ -26,11 +28,12 @@ export function normalizarFiltros({ anoDe = null, anoAte = null, notaMin = null,
 
 // Filtros inclusivos e opcionais; com notaMin definido, filme sem nota fica de fora.
 // Oscar: 'indicado' exige oscarIndicacoes > 0; 'vencedor' exige oscarVitorias > 0.
-export function filtrarFilmes(filmes, filtros) {
+// `campoAno`: campo do ano de cada item ('ano' nos filmes, 'anoInicio' nas séries).
+export function filtrarFilmes(filmes, filtros, campoAno = 'ano') {
   const { anoDe, anoAte, notaMin, oscar } = normalizarFiltros(filtros);
   if (anoDe === null && anoAte === null && notaMin === null && oscar === '') return filmes;
-  return filmes.filter((f) => (anoDe === null || f.ano >= anoDe)
-    && (anoAte === null || f.ano <= anoAte)
+  return filmes.filter((f) => (anoDe === null || f[campoAno] >= anoDe)
+    && (anoAte === null || f[campoAno] <= anoAte)
     && (notaMin === null || (typeof f.nota === 'number' && f.nota >= notaMin))
     && (oscar === '' || (oscar === 'indicado' ? f.oscarIndicacoes > 0 : f.oscarVitorias > 0)));
 }
@@ -94,12 +97,12 @@ function selecionar(elegiveis, rng, anteriores = []) {
 
 // Devolve { nivel, filmes, aviso, mensagem }. generoQid = null significa "Qualquer gênero".
 // Filtros de ano, nota e Oscar (anoDe, anoAte, notaMin, oscar) valem antes dos níveis de relaxamento, que operam sobre o conjunto filtrado.
-export function recomendar({ filmes: todos, humores, humorId, generoQid = null, rng, anteriores = [], anoDe = null, anoAte = null, notaMin = null, oscar = '', incluir = [], excluir = [], tagsValidas }) {
+export function recomendar({ filmes: todos, humores, humorId, generoQid = null, rng, anteriores = [], anoDe = null, anoAte = null, notaMin = null, oscar = '', incluir = [], excluir = [], tagsValidas, textos = TEXTOS_FILMES, campoAno = 'ano' }) {
   const filtros = normalizarFiltros({ anoDe, anoAte, notaMin, oscar });
   const comFiltros = filtros.anoDe !== null || filtros.anoAte !== null || filtros.notaMin !== null || filtros.oscar !== '';
   const tags = normalizarTags({ incluir, excluir, tagsValidas, filmes: todos });
   const comTags = tags.incluir.length > 0 || tags.excluir.length > 0;
-  const filmes = filtrarTags(filtrarFilmes(todos, filtros), tags);
+  const filmes = filtrarTags(filtrarFilmes(todos, filtros, campoAno), tags);
   const humor = listaDeHumores(humores).find((h) => h.id === humorId);
   const qidsDoHumor = new Set(humor ? humor.generos.map((g) => g.qid) : []);
   const doHumor = filmes.filter((f) => f.generos.some((q) => qidsDoHumor.has(q)));
@@ -111,20 +114,20 @@ export function recomendar({ filmes: todos, humores, humorId, generoQid = null, 
     const rotuloGenero = listarGeneros({ humores: listaDeHumores(humores) }).find((g) => g.qid === generoQid)?.rotulo ?? generoQid;
     const comGenero = filmes.filter((f) => f.generos.includes(generoQid));
     const ambos = doHumor.filter((f) => f.generos.includes(generoQid));
-    const prefixo = `Não encontramos filmes para esse humor com o gênero ${rotuloGenero}.`;
+    const prefixo = `Não encontramos ${textos.itens} para esse humor com o gênero ${rotuloGenero}.`;
     if (ambos.length > 0) {
       nivel = 'humor+genero';
       elegiveis = ambos;
     } else if (comGenero.length > 0) {
       nivel = 'genero';
       elegiveis = comGenero;
-      aviso = `${prefixo} Mostrando filmes de ${rotuloGenero}.`;
+      aviso = `${prefixo} Mostrando ${textos.itens} de ${rotuloGenero}.`;
     } else if (doHumor.length > 0) {
-      aviso = `${prefixo} Mostrando filmes para o humor ${humor.rotulo}.`;
+      aviso = `${prefixo} Mostrando ${textos.itens} para o humor ${humor.rotulo}.`;
     }
   }
   if (elegiveis.length === 0) {
-    const mensagem = comTags ? (comFiltros ? MSG_NENHUM_TAGS_FILTROS : MSG_NENHUM_TAGS) : (comFiltros ? MSG_NENHUM_FILTROS : MSG_NENHUM);
+    const mensagem = comTags ? (comFiltros ? textos.nenhumTagsFiltros : textos.nenhumTags) : (comFiltros ? textos.nenhumFiltros : textos.nenhum);
     return { nivel: 'nenhum', filmes: [], aviso: '', mensagem, candidatos: [] };
   }
   return { nivel, filmes: selecionar(elegiveis, rng, anteriores), aviso, mensagem: '', candidatos: conjuntoCandidato(elegiveis) };

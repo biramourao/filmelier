@@ -46,3 +46,19 @@ test('AC-17: nenhum data:image, data:font nem api.themoviedb.org no código publ
     assert.ok(!texto.includes('api.themoviedb.org'), alvo);
   }
 });
+
+// FILMELIER-6 (AC-16, AC-20): os 3 arquivos de séries seguem para dist/data e nenhum arquivo do dist cita o segredo do TMDB.
+test('AC-16: dist/data/series.json, humores-series.json e clima-series.json: SHA-256 igual ao da fonte', () => {
+  for (const nome of ['series.json', 'humores-series.json', 'clima-series.json']) {
+    assert.equal(sha(join(dist, 'data', nome)), sha(join(raiz, 'data', nome)), nome);
+  }
+});
+
+test('AC-20: nenhum arquivo do dist cita TMDB_TOKEN', () => {
+  const todos = arquivos(dist);
+  assert.ok(todos.length >= 8);
+  for (const alvo of todos) {
+    if (/\.(png|jpe?g|ico|woff2?)$/.test(alvo)) continue;
+    assert.ok(!readFileSync(alvo, 'utf8').includes('TMDB_TOKEN'), alvo);
+  }
+});

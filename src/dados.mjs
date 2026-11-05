@@ -37,6 +37,35 @@ export async function carregarDados(fetchImpl, logger = console, { timeoutMs = 1
   }
 }
 
+// FILMELIER-6 (D-7): forma mínima de data/humores-series.json e data/series.json; lança Error com o motivo.
+export function validarSeries(humores, series) {
+  if (!Array.isArray(humores?.humores) || humores.humores.length === 0) {
+    throw new Error('data/humores-series.json sem a lista "humores"');
+  }
+  if (!Array.isArray(series?.series)) throw new Error('data/series.json sem a lista "series"');
+  const geradoEm = series.meta?.geradoEm;
+  if (typeof geradoEm !== 'string' || !ISO_8601.test(geradoEm) || Number.isNaN(Date.parse(geradoEm))) {
+    throw new Error('data/series.json sem meta.geradoEm válido');
+  }
+}
+
+// Carga sob demanda da aba Séries. Mesmo contrato de carregarDados: nunca lança; em falha devolve { erro } e registra
+// 1 console.error com prefixo [filmelier]. Pede data/humores-series.json e data/series.json em paralelo.
+export async function carregarSeries(fetchImpl, logger = console, { timeoutMs = 15000, criarSinal = (ms) => AbortSignal.timeout(ms) } = {}) {
+  try {
+    const [humores, series] = await Promise.all([
+      buscarJson(fetchImpl, 'data/humores-series.json', criarSinal(timeoutMs)),
+      buscarJson(fetchImpl, 'data/series.json', criarSinal(timeoutMs)),
+    ]);
+    validarSeries(humores, series);
+    return { humores, series, erro: null };
+  } catch (e) {
+    const motivo = e?.message ?? String(e);
+    logger.error(`[filmelier] falha ao carregar séries: ${motivo}`);
+    return { humores: null, series: null, erro: motivo };
+  }
+}
+
 // dd/mm/aaaa em UTC, para o dia não mudar conforme o fuso do visitante.
 export function formatarData(iso) {
   return new Date(iso).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
