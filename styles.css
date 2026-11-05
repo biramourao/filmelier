@@ -1,31 +1,35 @@
-/* Redesenho aconchegante (FILMELIER-2, design.md D-9 a D-12). Só fontes do sistema. */
+/* Tema cinema escuro (FILMELIER-5, design.md D-7): fundo quase preto, texto marfim, dourado e vermelho de cortina.
+   Só fontes do sistema. Os nomes dos tokens vêm da FILMELIER-2; só os valores mudaram. */
 
 :root {
-  --cor-fundo: #fff8ef;
-  --cor-superficie: #ffffff;
-  --cor-superficie-suave: #fbeee0;
-  --cor-texto: #3d2b1f;
-  --cor-texto-secundario: #5c4a3d;
-  --cor-link: #8a3015;
-  --cor-primaria: #a33d1f;
-  --cor-primaria-escura: #8a3015;
-  --cor-texto-sobre-primaria: #ffffff;
-  --cor-desabilitado: #7a6a5f;
-  --cor-borda: #a0806a;
-  --cor-foco: #c25400;
-  --cor-aviso-fundo: #fff1d6;
-  --cor-aviso-borda: #b26a00;
-  --cor-erro-texto: #7a1010;
-  --cor-erro-fundo: #fde8e8;
-  --cor-erro-borda: #b00020;
-  --cor-placeholder-1: #f6d5b8;
-  --cor-placeholder-2: #e9a97f;
-  --cor-logo-borda: #8f7260;
-  --cor-tag-fundo: #ffffff;
-  --cor-tag-hover: #f6e6d8;
-  --cor-tag-incluida-fundo: #fbe3cf;
-  --cor-tag-excluida-fundo: #f6dcdc;
-  --cor-tag-card-fundo: #fbeee0;
+  --cor-fundo: #121014;
+  --cor-superficie: #1c1920;
+  --cor-superficie-suave: #27222d;
+  --cor-texto: #f4ead8;
+  --cor-texto-secundario: #cdc3b2;
+  --cor-link: #e8bd55;
+  --cor-primaria: #d4a437;
+  --cor-primaria-escura: #b98a22;
+  --cor-texto-sobre-primaria: #1a1204;
+  --cor-desabilitado: #8f8878;
+  --cor-borda: #8d8598;
+  --cor-foco: #ffd166;
+  --cor-aviso-fundo: #2e2410;
+  --cor-aviso-borda: #d4a437;
+  --cor-erro-texto: #ffb8b8;
+  --cor-erro-fundo: #3a1518;
+  --cor-erro-borda: #e5484d;
+  --cor-placeholder-1: #3b303f;
+  --cor-placeholder-2: #5b2a36;
+  --cor-logo-borda: #8d8598;
+  --cor-tag-fundo: #1c1920;
+  --cor-tag-hover: #2f2a36;
+  --cor-tag-incluida-fundo: #3b2f12;
+  --cor-tag-excluida-fundo: #4a1519;
+  --cor-tag-card-fundo: #27222d;
+  --cor-destaque-dourado: #d4a437;
+  --cor-destaque-vermelho: #e5484d;
+  --cor-sombra: #000000;
 }
 
 *,
@@ -109,6 +113,21 @@ legend {
   border-radius: 0.5rem;
 }
 
+.opcao {
+  transition: transform 160ms, box-shadow 160ms, border-color 160ms;
+}
+
+.opcao:hover {
+  border-color: var(--cor-destaque-dourado);
+  box-shadow: 0 0.25rem 0.75rem var(--cor-sombra);
+  transform: translateY(-2px);
+}
+
+.opcao:has(:focus-visible) {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 3px;
+}
+
 .opcao:has(input:checked) {
   background: var(--cor-superficie-suave);
   border-color: var(--cor-primaria);
@@ -176,15 +195,20 @@ button {
   font: inherit;
   font-weight: 600;
   color: var(--cor-texto-sobre-primaria);
-  background: var(--cor-primaria);
+  background: var(--cor-destaque-dourado);
   border: 0;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: background-color 150ms;
+  transition: background-color 160ms, transform 160ms, box-shadow 160ms;
 }
 
 button:hover {
   background: var(--cor-primaria-escura);
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 0.25rem 0.75rem var(--cor-sombra);
 }
 
 button:disabled {
@@ -194,6 +218,7 @@ button:disabled {
 
 a:focus-visible,
 button:focus-visible,
+.tag-controle button:focus-visible,
 summary:focus-visible,
 select:focus-visible,
 input:focus-visible {
@@ -220,7 +245,9 @@ a {
   border-radius: 0.5rem;
 }
 
-/* Tags de tema e clima (FILMELIER-4): grupo do formulário e chips. O estado ativo tem borda de 2px e sublinhado, além do fundo. */
+/* Tags de tema e clima (FILMELIER-4 e FILMELIER-5, D-6): grupo do formulário e chips. Cada tag tem o rótulo 1 vez e 2 botões,
+   "+" (Quero) e "−" (Não quero). O estado ativo muda a borda para 2px, o peso da fonte, a sombra interna e a FORMA do ícone
+   (círculo cheio para "Quero", quadrado cheio para "Não quero"), além da cor: nenhum estado depende só de cor. */
 
 #grupo-temas {
   margin-bottom: 1rem;
@@ -244,18 +271,43 @@ a {
   margin: 0 0 1rem;
 }
 
+.legenda-tags {
+  flex: 1 0 100%;
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--cor-texto-secundario);
+}
+
+#chips .legenda-tags {
+  margin: 0;
+}
+
 .tag-controle {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
   max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  background: var(--cor-tag-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: 0.5rem;
+}
+
+.tag-rotulo {
+  font-size: 0.95rem;
+  color: var(--cor-texto);
 }
 
 .tag-controle button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 1.5rem;
   min-height: 1.5rem;
   max-width: 100%;
-  padding: 0.25rem 0.6rem;
+  padding: 0.25rem 0.5rem;
   font-size: 0.95rem;
   font-weight: 400;
   color: var(--cor-texto);
@@ -265,6 +317,20 @@ a {
 
 .tag-controle button:hover {
   background: var(--cor-tag-hover);
+  transform: translateY(-1px);
+}
+
+.tag-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
 }
 
 .tag-controle button[aria-pressed="true"],
@@ -272,15 +338,30 @@ a {
   font-weight: 700;
   color: var(--cor-texto);
   background: var(--cor-tag-incluida-fundo);
-  border: 2px solid var(--cor-primaria);
-  text-decoration: underline;
+  border: 2px solid var(--cor-destaque-dourado);
+  box-shadow: inset 0 0 0 1px var(--cor-destaque-dourado);
+}
+
+.tag-controle button[data-acao="incluir"][aria-pressed="true"] .tag-icone {
+  color: var(--cor-texto-sobre-primaria);
+  background: var(--cor-destaque-dourado);
+  border-color: var(--cor-destaque-dourado);
+  border-radius: 50%;
 }
 
 .tag-controle button[data-acao="excluir"][aria-pressed="true"],
 .tag-controle button[data-acao="excluir"][aria-pressed="true"]:hover {
   color: var(--cor-erro-texto);
   background: var(--cor-tag-excluida-fundo);
-  border-color: var(--cor-erro-borda);
+  border-color: var(--cor-destaque-vermelho);
+  box-shadow: inset 0 0 0 1px var(--cor-destaque-vermelho);
+}
+
+.tag-controle button[data-acao="excluir"][aria-pressed="true"] .tag-icone {
+  color: var(--cor-fundo);
+  background: var(--cor-destaque-vermelho);
+  border-color: var(--cor-destaque-vermelho);
+  border-radius: 0;
 }
 
 /* Lista e card */
@@ -299,6 +380,17 @@ a {
   background: var(--cor-superficie);
   border: 1px solid var(--cor-borda);
   border-radius: 0.75rem;
+  transition: transform 200ms, box-shadow 200ms;
+}
+
+.card:hover {
+  box-shadow: 0 0.5rem 1.25rem var(--cor-sombra);
+  transform: translateY(-2px);
+}
+
+.card:has(:focus-visible) {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 3px;
 }
 
 .card .capa {
@@ -592,7 +684,10 @@ footer {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button {
-    transition: none;
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
   }
 }

@@ -4,9 +4,9 @@ const MSG_NENHUM = 'Não encontramos filmes para essa combinação. Escolha outr
 
 const MSG_NENHUM_FILTROS = 'Nenhum filme com esses filtros. Tente ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
 
-const MSG_NENHUM_TAGS = 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "menos disso".';
+const MSG_NENHUM_TAGS = 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "não quero".';
 
-const MSG_NENHUM_TAGS_FILTROS = 'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "menos disso", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
+const MSG_NENHUM_TAGS_FILTROS = 'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "não quero", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.';
 
 const definido = (v) => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
 

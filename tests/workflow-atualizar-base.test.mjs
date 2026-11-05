@@ -64,8 +64,9 @@ test('AC-1: sem pull_request, pull_request_target nem continue-on-error', () => 
   assert.doesNotMatch(yml, /pull_request|continue-on-error/);
 });
 
-test('AC-9: suíte do workflow sem tests/entrega e package.json sem dependencies', () => {
+// FILMELIER-5 (DECISION.md D-D): a parte "package.json sem dependencies" saiu daqui; a política de
+// dependências vive em tests/dependencias.test.mjs. O workflow segue sem `npm ci` (a suíte node não usa pacotes).
+test('AC-9: suíte do workflow sem tests/entrega e sem npm ci', () => {
   assert.doesNotMatch(yml, /tests\/entrega/);
-  const pacote = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.ok(!('dependencies' in pacote) && !('devDependencies' in pacote));
+  assert.doesNotMatch(yml, /npm (ci|install)/);
 });

@@ -101,3 +101,28 @@ test('AC-13: todo link do item sai com target _blank e rel noopener noreferrer',
     assert.ok(l.rel.includes('noopener') && l.rel.includes('noreferrer'));
   }
 });
+
+// Movidos de tests/pagina-filtros.test.mjs (FILMELIER-5, D-13): lógica pura do card; o resto virou teste de componente.
+const generosFiltros = [{ qid: 'Q1', rotulo: 'Drama' }];
+const baseFiltros = { qid: 'Q9', titulo: 'T', ano: 1999, generos: ['Q1'], sitelinks: 1 };
+
+test('card: nota com vírgula pt-BR e uma casa; sem nota o campo é nulo', () => {
+  assert.equal(montarCard(montarItem({ ...baseFiltros, nota: 8.4 }, generosFiltros)).notaTexto, 'Nota 8,4');
+  assert.equal(montarCard(montarItem({ ...baseFiltros, nota: 8 }, generosFiltros)).notaTexto, 'Nota 8,0');
+  assert.equal(montarCard(montarItem(baseFiltros, generosFiltros)).notaTexto, null);
+  assert.equal('nota' in montarItem(baseFiltros, generosFiltros), false);
+});
+
+test('card: selo do Oscar com singular e plural; sem Oscar não há selo', () => {
+  const selo = (o) => montarCard(montarItem({ ...baseFiltros, ...o }, generosFiltros)).oscar;
+  assert.equal(selo({ oscarVitorias: 1, oscarIndicacoes: 7 }).texto, 'Venceu 1 Oscar · indicado em 7 categorias');
+  assert.equal(selo({ oscarVitorias: 3, oscarIndicacoes: 9 }).texto, 'Venceu 3 Oscars · indicado em 9 categorias');
+  assert.equal(selo({ oscarVitorias: 1, oscarIndicacoes: 1 }).texto, 'Venceu 1 Oscar · indicado em 1 categoria');
+  assert.equal(selo({ oscarIndicacoes: 1 }).texto, 'Indicado em 1 categoria do Oscar');
+  assert.equal(selo({ oscarIndicacoes: 6 }).texto, 'Indicado em 6 categorias do Oscar');
+  assert.equal(selo({ oscarVitorias: 2, oscarIndicacoes: 6 }).emoji, '\u{1F3C6}');
+  assert.equal(selo({ oscarIndicacoes: 6 }).emoji, null);
+  assert.equal(selo({}), null);
+  assert.equal(selo({ oscarVitorias: 0, oscarIndicacoes: 0 }), null);
+});
+

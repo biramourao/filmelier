@@ -106,9 +106,9 @@ test('AC-11: nenhum filme com a tag em nenhum nível: nível nenhum, lista vazia
 test('AC-11: as 4 mensagens exatas de resultado vazio, sem exceção', () => {
   const filmes = varios(8, { tags: ['bruxaria'], nota: 5 });
   const base = { tagsValidas: ['bruxaria', 'magia'] };
-  assert.equal(chamar(filmes, { ...base, incluir: ['magia'] }).mensagem, 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "menos disso".');
-  assert.equal(chamar(filmes, { ...base, excluir: ['bruxaria'] }).mensagem, 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "menos disso".');
-  assert.equal(chamar(filmes, { ...base, incluir: ['bruxaria'], notaMin: 9 }).mensagem, 'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "menos disso", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.');
+  assert.equal(chamar(filmes, { ...base, incluir: ['magia'] }).mensagem, 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "não quero".');
+  assert.equal(chamar(filmes, { ...base, excluir: ['bruxaria'] }).mensagem, 'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "não quero".');
+  assert.equal(chamar(filmes, { ...base, incluir: ['bruxaria'], notaMin: 9 }).mensagem, 'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "não quero", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.');
   assert.equal(chamar(filmes, { anoDe: 2029 }).mensagem, 'Nenhum filme com esses filtros. Tente ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.');
   assert.equal(chamar([], {}).mensagem, MSG_VAZIO);
   assert.equal(chamar(filmes, { incluir: ['inexistente'], humorId: 'nao-existe' }).mensagem, MSG_VAZIO);

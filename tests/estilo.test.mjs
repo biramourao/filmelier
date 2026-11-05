@@ -132,12 +132,18 @@ test('AC-16: pares de contraste dos controles de tag (texto 4,5 e não texto 3,0
 
 const emRem = (valor) => (/px$/.test(valor) ? parseFloat(valor) / 16 : parseFloat(valor));
 
-test('AC-16: [aria-pressed="true"] com borda e sublinhado, alvo de 1,5rem e flex-wrap nos chips', () => {
+test('AC-12: [aria-pressed="true"] com borda de 2px e mais 1 propriedade não cromática, ícone de forma própria, alvo de 1,5rem e flex-wrap nos chips', () => {
   const pressionado = todos.find((b) => b.seletor.split(',').map((s) => s.trim()).includes('.tag-controle button[aria-pressed="true"]'));
   assert.ok(pressionado);
-  assert.match(pressionado.corpo, /border:\s*2px solid/);
-  assert.match(pressionado.corpo, /text-decoration:\s*underline/);
+  const borda = /border:\s*(\d+)px solid/.exec(pressionado.corpo);
+  assert.ok(borda && Number(borda[1]) >= 2, 'borda de no mínimo 2px');
+  const naoCromaticas = [/font-weight:\s*[6-9]00/, /text-decoration:\s*underline/, /box-shadow:\s*inset/].filter((re) => re.test(pressionado.corpo));
+  assert.ok(naoCromaticas.length >= 1, 'ao menos 1 propriedade não cromática');
   assert.match(pressionado.corpo, /background:/);
+  const forma = (acao) => todos.find((b) => b.seletor === `.tag-controle button[data-acao="${acao}"][aria-pressed="true"] .tag-icone`);
+  assert.ok(forma('incluir') && forma('excluir'));
+  assert.match(forma('incluir').corpo, /border-radius:\s*50%/);
+  assert.match(forma('excluir').corpo, /border-radius:\s*0\s*;/);
   const botao = todos.find((b) => b.seletor === '.tag-controle button');
   const minH = /min-height:\s*([\d.]+(?:rem|px))/.exec(botao.corpo)?.[1];
   const minW = /min-width:\s*([\d.]+(?:rem|px))/.exec(botao.corpo)?.[1];
@@ -146,15 +152,19 @@ test('AC-16: [aria-pressed="true"] com borda e sublinhado, alvo de 1,5rem e flex
   assert.match(chips.corpo, /flex-wrap:\s*wrap/);
 });
 
-test('AC-12: razão de contraste calculada confere com a tabela de design D-9 (texto/fundo 12,74)', () => {
-  assert.ok(Math.abs(razao('#3d2b1f', '#fff8ef') - 12.74) < 0.05);
+test('AC-18: a fórmula de razão de contraste confere com preto e branco (21) e com a razão de um par conhecido', () => {
+  assert.equal(razao('#000000', '#ffffff'), 21);
+  assert.equal(razao('#ffffff', '#ffffff'), 1);
+  assert.ok(Math.abs(razao('#767676', '#ffffff') - 4.54) < 0.01);
 });
 
-test('AC-12: transition ou animation só com bloco prefers-reduced-motion que as anula', () => {
-  if (!/transition\s*:|animation\s*:/.test(css)) return;
+test('AC-18: o último bloco do arquivo é prefers-reduced-motion e anula toda transition e animation', () => {
   const m = /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*)\}\s*$/.exec(css.trim());
-  assert.ok(m, 'bloco prefers-reduced-motion');
-  assert.match(m[1], /transition\s*:\s*none|animation\s*:\s*none/);
+  assert.ok(m, 'bloco prefers-reduced-motion por último');
+  assert.match(m[1], /\*,\s*\*::before,\s*\*::after\s*\{/);
+  assert.match(m[1], /transition\s*:\s*none\s*!important/);
+  assert.match(m[1], /animation\s*:\s*none\s*!important/);
+  assert.equal(css.trim().split('@media (prefers-reduced-motion').length, 2);
 });
 
 test('AC-12: foco visível com outline-offset de no mínimo 2px e sem fonte externa nem @import', () => {

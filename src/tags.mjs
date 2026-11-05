@@ -36,15 +36,19 @@ export function filtroDoEstado(estado) {
   };
 }
 
-// Modelo dos 2 botões de uma tag (formulário e chips): o do rótulo inclui; o "Menos" exclui.
+// Modelo dos 2 botões de uma tag (formulário e chips), FILMELIER-5 (D-6): o "+" inclui ("Quero {rótulo}") e o "−" exclui
+// ("Não quero {rótulo}"). `icone` é decoração visual (a UI o põe em aria-hidden); `nome` é o nome acessível.
+export const ICONE_INCLUIR = '+';
+export const ICONE_EXCLUIR = '\u2212';
+
 export function montarControle(tag, estado) {
   const e = estadoDaTag(estado, tag.id);
   return {
     id: tag.id,
     rotulo: tag.rotulo,
     botoes: [
-      { acao: 'incluir', tag: tag.id, texto: tag.rotulo, nome: tag.rotulo, pressionado: e === 'incluida' },
-      { acao: 'excluir', tag: tag.id, texto: 'Menos', nome: `Menos ${tag.rotulo}`, pressionado: e === 'excluida' },
+      { acao: 'incluir', tag: tag.id, icone: ICONE_INCLUIR, nome: `Quero ${tag.rotulo}`, pressionado: e === 'incluida' },
+      { acao: 'excluir', tag: tag.id, icone: ICONE_EXCLUIR, nome: `Não quero ${tag.rotulo}`, pressionado: e === 'excluida' },
     ],
   };
 }

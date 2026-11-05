@@ -5,12 +5,11 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { join, relative } from 'node:path';
 import { cspEsperada } from './apoio/csp.mjs';
-import { validarUrlWorker } from '../src/provedores.mjs';
 
 const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 // `.github` fica fora das varreduras de segredo: o workflow referencia o segredo por expressão do Actions (nunca o valor).
 // Ele tem teste próprio (tests/workflow-atualizar-base.test.mjs).
-const EXCLUIDOS = new Set(['.git', '.github', '.studioai', '.studio', 'openspec', 'node_modules', '.claude']);
+const EXCLUIDOS = new Set(['.git', '.github', '.studioai', '.studio', 'openspec', 'node_modules', 'dist', '.claude']);
 // FILMELIER-4 (D-11): nomes de entrada excluídos da busca por palavras; só estes 2 caminhos podem ter esses nomes.
 const EXCLUIDOS_TEMAS = ['temas.json', 'temas.mjs'];
 const CAMINHOS_TEMAS = ['data/temas.json', 'scripts/lib/temas.mjs'];
@@ -38,7 +37,7 @@ function buscar(padrao, caminhos, excluidos) {
 const html = readFileSync(join(raiz, 'index.html'), 'utf8');
 
 test('AC-18: src/ e index.html sem innerHTML nem armazenamento ou rastreio', () => {
-  const padrao = new RegExp(['innerHTML', 'localStorage', 'sessionStorage', 'document\\.cookie', 'sendBeacon'].join('|'));
+  const padrao = new RegExp(['innerHTML', 'dangerouslySetInnerHTML', 'localStorage', 'sessionStorage', 'document\\.cookie', 'sendBeacon', 'history\\.'].join('|'));
   assert.deepEqual(buscar(padrao, ['src', 'index.html']), []);
 });
 
@@ -76,31 +75,8 @@ test('AC-1: README.md tem a seção "Rotação da chave do TMDB" citando GitHub 
   assert.ok(secao.includes('Cloudflare'));
 });
 
-test('AC-18: CSP default-src self declarada no index.html', () => {
-  assert.match(html, /<meta\s+http-equiv="Content-Security-Policy"\s+content="[^"]*default-src 'self'/);
-});
-
 test('AC-21: html com lang pt-BR', () => {
   assert.match(html, /<html[^>]*\slang="pt-BR"/);
-});
-
-test('AC-19: aria-live polite, fieldset com legend e label[for] do gênero', () => {
-  assert.match(html, /aria-live="polite"/);
-  assert.match(html, /<fieldset>[\s\S]*<legend>[^<]+<\/legend>[\s\S]*<\/fieldset>/);
-  assert.match(html, /<label\s+for="genero"/);
-  assert.match(html, /<select\s+id="genero"/);
-  const app = readFileSync(join(raiz, 'src/app.mjs'), 'utf8');
-  assert.match(app, /for: id/);
-  assert.match(app, /type: 'radio'/);
-});
-
-test('AC-18: todo a com target _blank no index.html tem noopener e noreferrer', () => {
-  const ancoras = html.match(/<a\s[^>]*>/g) ?? [];
-  assert.ok(ancoras.length > 0);
-  for (const a of ancoras.filter((x) => /target="_blank"/.test(x))) {
-    assert.match(a, /rel="[^"]*noopener[^"]*"/);
-    assert.match(a, /rel="[^"]*noreferrer[^"]*"/);
-  }
 });
 
 test('AC-21: sem script externo no index.html', () => {
@@ -127,36 +103,6 @@ test('AC-21 e AC-22: sem configuração de outra hospedagem, credenciais nem cha
   assert.deepEqual(pem, []);
 });
 
-test('AC-10 e AC-14: app liga a sessão da lista, as marcas de enriquecimento e o erro da capa', () => {
-  const app = readFileSync(join(raiz, 'src/app.mjs'), 'utf8');
-  assert.match(app, /criarSessaoLista\(/);
-  assert.match(app, /criarEnriquecedor\(/);
-  assert.match(app, /performance\.mark\('filmelier:enriquecimento-fim'\)/);
-  assert.match(app, /performance\.measure\('filmelier:enriquecimento', 'filmelier:recomendar-inicio', 'filmelier:enriquecimento-fim'\)/);
-  assert.match(app, /addEventListener\('error'/);
-  assert.match(app, /invalidar\(\)/);
-  assert.match(app, /aviso\.textContent = texto/);
-});
-
-test('AC-12: marcação da FILMELIER-1 preservada no index.html redesenhado', () => {
-  assert.match(html, /<fieldset>\s*<legend>[^<]+<\/legend>/);
-  assert.match(html, /<label\s+for="genero"/);
-  assert.match(html, /<select\s+id="genero"/);
-  assert.match(html, /<ul id="lista"><\/ul>/);
-  assert.match(html, /<button[^>]*id="recomendar"[^>]*\sdisabled[\s>]/);
-  assert.match(html, /<button[^>]*id="outras"[^>]*\shidden/);
-  assert.match(html, /<p id="erro"[^>]*\shidden>/);
-  assert.match(html, /<p id="aviso" hidden><\/p>/);
-});
-
-test('AC-11: iniciar tem try/catch com entrarEmErro e mantém os literais da FILMELIER-1', () => {
-  const app = readFileSync(join(raiz, 'src/app.mjs'), 'utf8');
-  assert.match(app, /function entrarEmErro\(\)/);
-  assert.match(app, /inicializar\(\{[\s\S]*entrarEmErro,/);
-  assert.match(app, /if \(dados\.erro\) \{\s*el\('erro'\)\.hidden = false;/);
-  assert.match(app, /el\('data-geracao'\)\.textContent = formatarData\(dados\.filmes\.meta\.geradoEm\)/);
-});
-
 // FILMELIER-3 (design D-13): a CSP esperada sai de cspEsperada(URL_WORKER), lida de src/config.mjs.
 // Trocar a URL do Worker exige mudar config.mjs e index.html no mesmo commit; este teste não precisa mudar.
 const CSP_SEM_WORKER = "default-src 'self'; connect-src 'self' https://www.wikidata.org https://pt.wikipedia.org https://en.wikipedia.org; img-src 'self' https://upload.wikimedia.org https://image.tmdb.org; object-src 'none'; base-uri 'none'; form-action 'none'";
@@ -170,85 +116,32 @@ test('AC-8: cspEsperada com URL vazia é a string exata e com origem acrescenta 
   assert.equal(com.split('https://exemplo.workers.dev').length, 2);
 });
 
-test('AC-8: CSP do index.html igual a cspEsperada(URL_WORKER de src/config.mjs)', () => {
-  const casou = /export const URL_WORKER = '(.*)';/.exec(readFileSync(join(raiz, 'src/config.mjs'), 'utf8'));
-  assert.ok(casou, 'a leitura de URL_WORKER em src/config.mjs não casou com a regex');
-  const urlWorker = casou[1];
-  if (urlWorker !== '') assert.equal(validarUrlWorker(urlWorker), true, 'URL_WORKER não vazio precisa passar em validarUrlWorker');
-  const m = /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/.exec(html);
-  assert.ok(m, 'meta CSP');
-  assert.equal(m[1].replace(/\s+/g, ' ').trim(), cspEsperada(urlWorker));
-});
-
-test('AC-13: meta referrer no-referrer e ordem do head (charset, viewport, CSP, referrer)', () => {
+test('AC-13: meta referrer no-referrer na casca e ordem do head (charset, viewport, referrer); a CSP entra só no build e é testada em tests/dist', () => {
   assert.match(html, /<meta\s+name="referrer"\s+content="no-referrer"\s*\/?>/);
-  const ordem = ['<meta charset', 'name="viewport"', 'Content-Security-Policy', 'name="referrer"'].map((t) => html.indexOf(t));
+  const ordem = ['<meta charset', 'name="viewport"', 'name="referrer"'].map((t) => html.indexOf(t));
   assert.ok(ordem.every((i) => i >= 0));
   assert.deepEqual(ordem, [...ordem].sort((a, b) => a - b));
 });
 
 test('AC-13: src/ e index.html sem outerHTML, insertAdjacentHTML nem document.write', () => {
-  assert.deepEqual(buscar(/outerHTML|insertAdjacentHTML|document\.write/, ['src', 'index.html']), []);
+  assert.deepEqual(buscar(/outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML|document\.write/, ['src', 'index.html']), []);
 });
 
 test('AC-13: nenhum atributo style no código (a CSP não tem style-src próprio)', () => {
-  assert.deepEqual(buscar(/setAttribute\(\s*['"]style['"]|\.style\.|\sstyle=|style:/, ['src', 'index.html']), []);
+  assert.deepEqual(buscar(/setAttribute\(\s*['"]style['"]|\.style\.|\sstyle=|style=\{|style:/, ['src', 'index.html']), []);
 });
 
-test('AC-1: montarHumores monta span.emoji aria-hidden antes do texto do rótulo', () => {
-  const app = readFileSync(join(raiz, 'src/app.mjs'), 'utf8');
-  assert.match(app, /class: 'emoji'/);
-  assert.match(app, /'aria-hidden': 'true'/);
-  assert.match(app, /humor\.emoji/);
-  assert.match(app, /type: 'radio', name: 'humor'/);
-  assert.match(app, /for: id/);
-});
-
-test('AC-21 e AC-22: sem package.json ou sem dependencies e devDependencies', () => {
-  const caminho = join(raiz, 'package.json');
-  if (!existsSync(caminho)) return;
-  const pacote = JSON.parse(readFileSync(caminho, 'utf8'));
-  assert.ok(!('dependencies' in pacote) && !('devDependencies' in pacote));
-});
+// FILMELIER-5: a política de dependências saiu daqui e vive em tests/dependencias.test.mjs (D-12).
 
 // ---- R-1 e R-2 (code review): atualização no lugar, região live curta e espaço reservado ----
-const app = readFileSync(join(raiz, 'src/app.mjs'), 'utf8');
 const estilos = readFileSync(join(raiz, 'styles.css'), 'utf8');
-const corpoDe = (fonte, nome) => {
-  const ini = fonte.indexOf(`function ${nome}(`);
-  assert.ok(ini >= 0, nome);
-  const prox = fonte.indexOf('\nfunction ', ini + 1);
-  return fonte.slice(ini, prox < 0 ? undefined : prox);
-};
 
-test('AC-19 Região live curta sem sinopses (R-1): a lista de cards fica fora de qualquer região aria-live; só um resumo curto é live', () => {
-  assert.doesNotMatch(html, /<section[^>]*id="resultado"[^>]*aria-live/);
-  assert.doesNotMatch(html, /<ul[^>]*aria-live/);
-  assert.match(html, /<p\s+id="resumo-lista"[^>]*aria-live="polite"/);
-  assert.match(html, /id="resumo-lista"[^>]*class="so-leitor"|class="so-leitor"[^>]*id="resumo-lista"/);
+test('AC-19 Região live curta sem sinopses (R-1): o resumo curto é só para leitor de tela (CSS); o resto vai em tests/ui/resultado.test.tsx', () => {
   assert.match(estilos, /\.so-leitor\s*\{[^}]*position:\s*absolute/);
 });
 
-test('R-1: mostrar anuncia só títulos no resumo; limparResultado esvazia o resumo', () => {
-  assert.match(corpoDe(app, 'mostrar'), /el\('resumo-lista'\)\.textContent = /);
-  assert.match(corpoDe(app, 'mostrar'), /cards\.map\(\(c\) => c\.titulo\)/);
-  assert.match(corpoDe(app, 'limparResultado'), /el\('resumo-lista'\)\.textContent = ''/);
-});
-
-test('R-1: o enriquecimento atualiza cada li no lugar, sem replaceChildren da lista (foco preservado)', () => {
-  const corpo = corpoDe(app, 'aplicarEnriquecimento');
-  assert.doesNotMatch(corpo, /replaceChildren/);
-  assert.doesNotMatch(corpo, /desenharItem/);
-  assert.match(corpo, /atualizarItem\(/);
-  const atualizar = corpoDe(app, 'atualizarItem');
-  assert.doesNotMatch(atualizar, /\.links|querySelector\('\.links'\)\.(replace|remove)/);
-  assert.doesNotMatch(atualizar, /\.replaceWith\(\s*desenharItem/);
-});
-
-test('R-2: o primeiro desenho reserva espaço da sinopse e do crédito da imagem, e o CSS dá altura mínima', () => {
-  assert.match(corpoDe(app, 'desenharItem'), /reservaSinopse\(\)[\s\S]*reservaCredito\(\)/);
+test('R-2: o CSS dá altura mínima ao crédito da imagem reservado (a reserva renderizada vai em tests/ui/enriquecimento.test.tsx)', () => {
   assert.match(estilos, /\.credito-imagem\.reservado\s*\{[^}]*min-height:\s*[\d.]+rem/);
-  assert.match(corpoDe(app, 'atualizarItem'), /\.reservado/);
 });
 
 test('R-10: #humores reserva altura para os chips nas 3 larguras antes de o JS montá-los', () => {
@@ -264,56 +157,11 @@ test('R-11: o bloco de sinopse tem altura fixa (reservado e preenchido), liberad
   assert.match(estilos, /\.sinopse-bloco:has\(\.sinopse\.expandida\)\s*\{[^}]*height:\s*auto/);
 });
 
-test('R-11: sem sinopse o esqueleto vira "Sinopse indisponível." e nenhum esqueleto é removido', () => {
-  const atualizar = corpoDe(app, 'atualizarItem');
-  assert.match(atualizar, /Sinopse indisponível\./);
-  assert.doesNotMatch(atualizar, /\.remove\(\)/);
-  assert.doesNotMatch(corpoDe(app, 'desenharCapa'), /\.credito-imagem'\)\?\.remove\(\)/);
-  assert.match(corpoDe(app, 'desenharCapa'), /reservaCredito\(\)/);
-});
-
-test('nit: loading vem antes de src na imagem da capa e a marca "(en)" fica fora do elemento lang="en"', () => {
-  const capa = corpoDe(app, 'desenharCapa');
-  assert.ok(capa.indexOf('loading: capa.loading') < capa.indexOf('src: capa.src'));
-  const sinopse = corpoDe(app, 'desenharSinopse');
-  assert.doesNotMatch(sinopse, /texto\.append\(criar\('span', card\.marcaIdioma/);
-  assert.match(sinopse, /card\.marcaIdioma/);
-});
-
 // ---- FILMELIER-3: seção de provedores no DOM (P-14) ----
-test('AC-7: app cria os provedores com URL_WORKER e passa à sessão com a notificação própria', () => {
-  assert.match(app, /import \{ URL_WORKER \} from '\.\/config\.mjs'/);
-  assert.match(app, /criarProvedores\(\{ urlWorker: URL_WORKER,/);
-  assert.match(app, /provedores, aoProvedores: aplicarProvedores/);
-});
-
-test('AC-7: aplicarProvedores atualiza no lugar e atualizarProvedores só troca o conteúdo da seção', () => {
-  const aplicar = corpoDe(app, 'aplicarProvedores');
-  assert.doesNotMatch(aplicar, /el\('lista'\)\.replaceChildren/);
-  assert.doesNotMatch(aplicar, /desenharItem/);
-  assert.match(aplicar, /atualizarProvedores\(/);
-  const atualizar = corpoDe(app, 'atualizarProvedores');
-  assert.match(atualizar, /querySelector\('\.provedores'\)/);
-  assert.match(atualizar, /replaceChildren/);
-  assert.doesNotMatch(atualizar, /\.links|resumo-lista|desenharItem|replaceWith/);
-  assert.doesNotMatch(atualizar, /focus\(/);
-});
-
-test('AC-7: a seção de provedores é o último filho do li, depois dos links, e só com provedores no card', () => {
-  const item = corpoDe(app, 'desenharItem');
-  assert.ok(item.indexOf('li.append(links)') < item.indexOf("class: 'provedores'"));
-  assert.match(item, /if \(card\.provedores\)/);
-  assert.ok(item.indexOf("class: 'provedores'") < item.indexOf('return li'));
-});
-
-test('R-6: cada rótulo de categoria liga ao seu ul por aria-labelledby e a seção tem nome acessível', () => {
-  const conteudo = corpoDe(app, 'conteudoProvedores');
-  assert.match(conteudo, /'aria-labelledby': idRotulo/);
-  assert.match(conteudo, /class: 'rotulo-categoria', id: idRotulo/);
-  assert.match(conteudo, /`categoria-provedores-\$\{contadorCategoria \+= 1\}`/);
-  const item = corpoDe(app, 'desenharItem');
-  assert.match(item, /role: 'group'/);
-  assert.match(item, /'aria-label': 'Onde assistir no Brasil'/);
+test('AC-7: as dependências reais criam os provedores com URL_WORKER de src/config.mjs', () => {
+  const dependencias = readFileSync(join(raiz, 'src/ui/dependencias.ts'), 'utf8');
+  assert.match(dependencias, /import \{ URL_WORKER \} from '\.\.\/config\.mjs'/);
+  assert.match(dependencias, /urlWorker: URL_WORKER/);
 });
 
 test('AC-7: .provedores reserva altura com min-height em rem, quebra de linha e logos de 46 px', () => {
@@ -326,40 +174,26 @@ test('AC-7: .provedores reserva altura com min-height em rem, quebra de linha e 
   assert.match(estilos, /border:\s*1px solid var\(--cor-logo-borda\)/);
 });
 
-test('AC-8: rodapé com o aviso exato do TMDB e links de nova aba com noopener e noreferrer', () => {
-  const rodape = /<footer>([\s\S]*?)<\/footer>/.exec(html)?.[1];
-  assert.ok(rodape, 'footer');
-  const texto = rodape.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  assert.ok(texto.includes('Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.'));
-  for (const a of (rodape.match(/<a\s[^>]*>/g) ?? []).filter((x) => /target="_blank"/.test(x))) {
-    assert.match(a, /rel="[^"]*noopener[^"]*"/);
-    assert.match(a, /rel="[^"]*noreferrer[^"]*"/);
-  }
-});
-
 const estilosDoLogo = readFileSync(join(raiz, 'styles.css'), 'utf8');
 // FILMELIER-4 (D-15): logo oficial do TMDB, arquivo da própria origem, sem alteração do original.
 // Origem: https://www.themoviedb.org/assets/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg
 // (versão curta azul, da página https://www.themoviedb.org/about/logos-attribution, baixada em 2026-11-04).
 const SHA256_LOGO_TMDB = '8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c';
 
-test('AC-15: rodapé com o logo local do TMDB dentro do link oficial, altura menor que a do h1 e texto do aviso exato', () => {
-  const rodape = /<footer>([\s\S]*?)<\/footer>/.exec(html)[1];
-  const ancora = /<a\s[^>]*href="https:\/\/www\.themoviedb\.org\/"[^>]*>\s*(<img\s[^>]*>)\s*<\/a>/.exec(rodape);
+test('AC-15: logo local do TMDB no Rodape.tsx: link oficial, arquivo da própria origem com o sha256 do original e altura menor que a do h1', () => {
+  const rodape = readFileSync(join(raiz, 'src/ui/Rodape.tsx'), 'utf8');
+  const ancora = /<a href="https:\/\/www\.themoviedb\.org\/" target="_blank" rel="noopener noreferrer">\s*(<img\s[^>]*\/>)\s*<\/a>/.exec(rodape);
   assert.ok(ancora, 'img dentro do link para themoviedb.org');
-  assert.match(ancora[0], /target="_blank"/);
-  assert.match(ancora[0], /rel="noopener noreferrer"/);
   const img = ancora[1];
   const src = /src="([^"]+)"/.exec(img)[1];
   assert.ok(!/^(https?:)?\/\//.test(src) && !src.startsWith('/'), 'src relativo');
   assert.match(img, /alt="TMDB"/);
   assert.equal(createHash('sha256').update(readFileSync(join(raiz, src))).digest('hex'), SHA256_LOGO_TMDB);
   assert.ok(statSync(join(raiz, 'assets/tmdb-logo.svg')).size > 0);
-  const altura = Number(/height="(\d+)"/.exec(img)[1]);
+  const altura = Number(/height=\{(\d+)\}/.exec(img)[1]);
   const fonteH1 = Number(/h1\s*\{[^}]*font-size:\s*([\d.]+)rem/.exec(estilosDoLogo)[1]) * 16;
   assert.ok(altura < fonteH1, `${altura} < ${fonteH1}`);
-  const texto = rodape.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  assert.ok(texto.includes('Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.'));
+  assert.ok(rodape.includes('Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.'));
 });
 
 test('AC-13: src/ e index.html sem api.themoviedb.org nem TMDB_TOKEN', () => {
@@ -454,7 +288,7 @@ test('AC-13: .gitignore ignora os arquivos locais do wrangler', () => {
   assert.ok(linhas.includes('.wrangler/'));
 });
 
-test('AC-13: todo import de worker/*.mjs é relativo ao próprio worker/ e package.json não traz wrangler nem dependências', () => {
+test('AC-13: todo import de worker/*.mjs é relativo ao próprio worker/ ', () => {
   const modulos = readdirSync(join(raiz, 'worker')).filter((n) => n.endsWith('.mjs'));
   assert.ok(modulos.includes('index.mjs'));
   for (const nome of modulos) {
@@ -465,26 +299,6 @@ test('AC-13: todo import de worker/*.mjs é relativo ao próprio worker/ e packa
       assert.ok(!origem.includes('src/'), `${nome}: ${origem}`);
     }
   }
-  const textoPacote = readFileSync(join(raiz, 'package.json'), 'utf8');
-  const pacote = JSON.parse(textoPacote);
-  assert.ok(!('dependencies' in pacote) && !('devDependencies' in pacote));
-  assert.doesNotMatch(textoPacote, /wrangler/);
-});
-
-test('AC-7: marcas e medida de desempenho dos provedores (início em mostrar, fim em aplicarProvedores)', () => {
-  assert.match(app, /performance\.mark\('filmelier:provedores-inicio'\)/);
-  assert.match(app, /performance\.mark\('filmelier:provedores-fim'\)/);
-  assert.match(app, /performance\.measure\('filmelier:provedores', 'filmelier:provedores-inicio', 'filmelier:provedores-fim'\)/);
-  const mostrarCorpo = corpoDe(app, 'mostrar');
-  assert.ok(mostrarCorpo.indexOf("performance.mark('filmelier:provedores-inicio')") < mostrarCorpo.indexOf('estado.sessao.exibir('));
-  assert.match(corpoDe(app, 'aplicarProvedores'), /performance\.mark\('filmelier:provedores-fim'\)/);
-});
-
-test('AC-6: o conteúdo dos provedores usa só createElement, textContent e atributos', () => {
-  const corpo = corpoDe(app, 'conteudoProvedores');
-  assert.doesNotMatch(corpo, /innerHTML|outerHTML|insertAdjacentHTML|document\.write/);
-  assert.match(corpo, /criar\('span', p\.nome, \{ class: 'nome-provedor' \}\)/);
-  assert.ok(corpo.indexOf('loading: p.logo.loading') < corpo.indexOf('src: p.logo.src'));
 });
 
 // ---- Título pt-BR (ajuste pós-FILMELIER-3) ----
@@ -493,14 +307,4 @@ test('título pt-BR: bloco do título reserva 2 linhas e a linha do título orig
   const altura = Number(/\.titulo-reservado \.bloco-titulo\s*\{[^}]*min-height:\s*([\d.]+)rem/.exec(estilos)[1]);
   assert.ok(altura >= 2 * 1.15 * 1.3 + 0.85 * 1.4, `min-height ${altura}rem`);
   assert.match(estilos, /\.card \.titulo-original\s*\{[^}]*min-height:\s*[\d.]+rem[^}]*color:\s*var\(--cor-texto-secundario\)/);
-  assert.match(corpoDe(app, 'desenharItem'), /'titulo-original'[^)]*'aria-hidden': 'true'/);
-});
-
-test('título pt-BR: a troca é no lugar, só com textContent, e não toca #resumo-lista', () => {
-  const t = corpoDe(app, 'atualizarTitulo');
-  assert.match(t, /textContent/);
-  assert.doesNotMatch(t, /innerHTML|insertAdjacentHTML|replaceWith|replaceChildren|resumo-lista/);
-  const p = corpoDe(app, 'aplicarProvedores');
-  assert.match(p, /atualizarTitulo\(li, cards\[i\]\)/);
-  assert.doesNotMatch(p, /resumo-lista|desenharItem|replaceChildren\(\.\.\.cards/);
 });

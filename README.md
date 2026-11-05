@@ -24,7 +24,23 @@ Site: https://biramourao.github.io/filmelier/
   um proxy em Cloudflare Workers (`worker/`), que guarda a chave do TMDB fora do repositório.
   Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.
 
-Página estática em HTML, CSS e JavaScript puro, sem dependências e sem etapa de build.
+A interface é uma página React (TypeScript) com tema cinema escuro, construída com Vite. A lógica de recomendação,
+de dados e de enriquecimento continua em módulos `.mjs` puros em `src/`, sem DOM e testados com o `node:test` do
+Node. Só `react` e `react-dom` vão para o navegador; o resto (Vite, TypeScript, Vitest, Testing Library) é de
+desenvolvimento.
+
+## Desenvolvimento
+
+Requer Node 24. Depois de clonar:
+
+```
+npm ci            # instala as dependências a partir do package-lock.json
+npm run dev       # servidor de desenvolvimento em http://localhost:5173/filmelier/ (sem CSP)
+npm run build     # gera dist/ (com a CSP, a cópia de data/ e assets/ e o favicon)
+npm run preview   # serve o dist/ para conferir o build de produção
+```
+
+`data/` continua sendo a fonte da base de filmes: o build a copia para `dist/data/`.
 
 ## Rodar os testes
 
@@ -32,9 +48,25 @@ Página estática em HTML, CSS e JavaScript puro, sem dependências e sem etapa 
 npm test
 node --import ./tests/apoio/sem-rede.mjs --test tests/*.test.mjs
 node --import ./tests/apoio/sem-rede.mjs --test tests/entrega/*.test.mjs
+npm run build && npm run test:dist
 ```
 
-Não há dependências npm: basta o Node.
+`npm test` roda 3 etapas: `node:test` (`npm run test:node`, lógica pura, CSS, workflows e README), Vitest
+(`npm run test:ui`, componentes em jsdom) e `tsc --noEmit` (`npm run typecheck`). A suíte `node:test` não usa
+nenhum pacote npm e roda sem `node_modules`; é o que o workflow semanal executa. A prova de que nenhum teste
+toca a rede é o `--import ./tests/apoio/sem-rede.mjs`, que faz o `fetch` global lançar. Depois do build,
+`npm run test:dist` confere o `dist/` (CSP, caminhos `/filmelier/`, cópia dos dados e tamanho do pacote).
+
+## Publicação
+
+O site é publicado pelo GitHub Actions (`.github/workflows/deploy.yml`), em 3 situações: push na `main`, disparo
+manual e depois de cada execução bem-sucedida da atualização semanal da base. O workflow roda `npm ci`,
+`npm audit`, `npm test`, `npm run build` e `npm run test:dist` e só então publica o `dist/`.
+
+**Passo manual, antes do merge na `main`:** em Configurações do repositório, em Pages, troque a fonte de
+"Deploy from a branch" para "GitHub Actions". Enquanto a fonte for a branch, o Pages serviria a casca do Vite sem
+build e o site quebraria. Para voltar atrás, reverta o commit de merge e restaure a fonte "Deploy from a branch"
+(`main`, raiz).
 
 ## Rotação da chave do TMDB
 
