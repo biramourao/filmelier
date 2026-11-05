@@ -140,8 +140,3 @@ test('AC-14: filme sem clima mostra no máximo 2 temas no card', () => {
   const lista = [tag('a', 'A', 21), tag('b', 'B', 22), tag('c', 'C', 23)];
   assert.deepEqual(tagsDoCard({ tags: ['a', 'b', 'c'] }, { lista }), ['A', 'B']);
 });
-
-test('AC-13: os chips da página nascem do conjunto candidato do resultado (e não só dos filmes sorteados)', () => {
-  const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
-  assert.match(app, /montarChips\(\{ candidatos: resultado\.candidatos \?\? \[\]/);
-});

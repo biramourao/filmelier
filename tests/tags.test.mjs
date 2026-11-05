@@ -20,20 +20,20 @@ test('AC-12: a lista vem só de meta.temas.lista, em ordem localeCompare pt-BR d
   for (const m of [undefined, {}, { temas: {} }, { temas: { lista: 'x' } }, { temas: { lista: [] } }]) assert.deepEqual(listaDeTags(m), []);
 });
 
-test('AC-12: cada tag do grupo tem 2 botões com aria-pressed false: o do rótulo e o "Menos {rótulo}"', () => {
+test('AC-11: cada tag do grupo tem 2 botões com aria-pressed false: "Quero {rótulo}" (+) e "Não quero {rótulo}" (−)', () => {
   const controles = montarControles(listaDeTags(meta([item('b', 'Beta'), item('a', 'Alfa')])), new Map());
   assert.equal(controles.length, 2);
   for (const c of controles) {
     assert.equal(c.botoes.length, 2);
     assert.deepEqual(c.botoes.map((b) => b.acao), ['incluir', 'excluir']);
-    assert.ok(c.botoes.every((b) => b.pressionado === false && b.texto !== ''));
-    assert.equal(c.botoes[0].nome, c.rotulo);
-    assert.equal(c.botoes[1].texto, 'Menos');
-    assert.equal(c.botoes[1].nome, `Menos ${c.rotulo}`);
+    assert.ok(c.botoes.every((b) => b.pressionado === false && b.icone !== '' && !('texto' in b)));
+    assert.deepEqual(c.botoes.map((b) => b.icone), ['+', '\u2212']);
+    assert.equal(c.botoes[0].nome, `Quero ${c.rotulo}`);
+    assert.equal(c.botoes[1].nome, `Não quero ${c.rotulo}`);
   }
 });
 
-test('AC-12: transições de estado: incluir, Menos, Menos de novo (incluída, excluída, neutra)', () => {
+test('AC-12: transições de estado: incluir, "Não quero", "Não quero" de novo (incluída, excluída, neutra)', () => {
   let e = new Map();
   e = alternar(e, 'bruxaria', 'incluir');
   assert.equal(estadoDaTag(e, 'bruxaria'), 'incluida');
@@ -48,7 +48,7 @@ test('AC-12: transições de estado: incluir, Menos, Menos de novo (incluída, e
   assert.equal(estadoDaTag(e, 'a'), 'neutra');
 });
 
-test('AC-13: incluir "Bruxaria" e depois "Menos Bruxaria" deixa só excluir', () => {
+test('AC-13: incluir "Bruxaria" e depois "Não quero Bruxaria" deixa só excluir', () => {
   const e = alternar(alternar(new Map(), 'bruxaria', 'incluir'), 'bruxaria', 'excluir');
   assert.deepEqual(filtroDoEstado(e), { incluir: [], excluir: ['bruxaria'] });
 });

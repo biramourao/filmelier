@@ -1,17 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { criarEnriquecedor } from '../src/enriquecer.mjs';
 import { criarProvedores } from '../src/provedores.mjs';
 import { criarSessaoLista } from '../src/lista.mjs';
 import { listarGeneros, recomendar } from '../src/recomendar.mjs';
 import { alternar, filtroDoEstado, listaDeTags, montarChips, montarControles } from '../src/tags.mjs';
 import { URL_WORKER } from '../src/config.mjs';
-import { cspEsperada } from './apoio/csp.mjs';
 
 const raiz = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
-const html = readFileSync(`${raiz}/index.html`, 'utf8');
-const fonteSrc = readdirSync(`${raiz}/src`).map((n) => readFileSync(`${raiz}/src/${n}`, 'utf8')).join('\n');
+// Só arquivos, recursivo: com src/ui/ (FILMELIER-5) um diretório não pode quebrar a leitura.
+const arquivosDe = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? arquivosDe(join(dir, e.name)) : [join(dir, e.name)]));
+const fonteSrc = arquivosDe(`${raiz}/src`).map((arq) => readFileSync(arq, 'utf8')).join('\n');
 const temas = JSON.parse(readFileSync(`${raiz}/data/temas.json`, 'utf8'));
 const humores = JSON.parse(readFileSync(`${raiz}/data/humores.json`, 'utf8'));
 
@@ -43,27 +44,29 @@ test('AC-15: tags escolhidas (2 incluídas e 1 excluída) não aparecem em nenhu
   estado = null;
 });
 
-test('AC-15: CSP igual à vigente (origem do Worker de config.mjs) e nenhuma ocorrência de api.themoviedb.org em src/ e index.html', () => {
-  const m = /<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]*)"/.exec(html);
-  assert.equal(m[1].replace(/\s+/g, ' ').trim(), cspEsperada(URL_WORKER));
-  assert.ok(!fonteSrc.includes('api.themoviedb.org') && !html.includes('api.themoviedb.org'));
+test('AC-15: nenhuma ocorrência de api.themoviedb.org em src/ (a CSP do build é testada em tests/dist)', () => {
+  assert.ok(!fonteSrc.includes('api.themoviedb.org'));
 });
 
-test('AC-16: textos novos em pt-BR presentes em src/ e index.html', () => {
-  const fonte = `${fonteSrc}\n${html}`;
+test('AC-16: textos novos em pt-BR presentes em src/', () => {
+  const fonte = fonteSrc;
   for (const texto of [
-    'Temas (opcional)', "'Menos'",
-    'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "menos disso".',
-    'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "menos disso", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.',
+    'Temas (opcional)', 'Quero ', 'Não quero ', '+ quero · \u2212 não quero',
+    'Nenhum filme com esses temas. Tente incluir outro tema ou desfazer um "não quero".',
+    'Nenhum filme com esses temas e filtros. Tente incluir outro tema, desfazer um "não quero", ampliar o período, baixar a nota mínima ou mudar o filtro de Oscar.',
   ]) assert.ok(fonte.includes(texto), texto);
 });
 
 test('AC-16: nenhum texto de chip ou do grupo é igual a uma keyword de data/temas.json', () => {
   const keywords = new Set([...temas.temas, ...temas.climas].flatMap((t) => t.keywords).concat(temas.ignorar));
   const lista = listaDeTags({ temas: { lista: [...temas.temas, ...temas.climas].map((t) => ({ id: t.id, rotulo: t.rotulo, filmes: 25 })) } });
-  const textos = ['Temas (opcional)', 'Menos'];
-  for (const c of montarControles(lista, new Map())) textos.push(...c.botoes.flatMap((b) => [b.texto, b.nome]));
+  const textos = ['Temas (opcional)', 'Quero', 'Não quero'];
+  for (const c of montarControles(lista, new Map())) textos.push(...c.botoes.flatMap((b) => [b.icone, b.nome]));
   const candidatos = lista.map((t) => ({ tags: [t.id] }));
   for (const c of montarChips({ candidatos, estado: new Map(), lista })) textos.push(c.rotulo);
   for (const t of textos) assert.ok(!keywords.has(t.toLowerCase()) && !keywords.has(t), t);
+});
+
+test('AC-11: nenhuma ocorrência de "menos disso" em src/', () => {
+  assert.ok(!fonteSrc.toLowerCase().includes('menos disso'));
 });

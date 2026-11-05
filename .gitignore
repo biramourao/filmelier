@@ -9,3 +9,7 @@
 # Worker de provedores (FILMELIER-3): arquivos locais do wrangler
 .dev.vars
 .wrangler/
+
+# FILMELIER-5: build e dependências
+node_modules/
+/dist/
