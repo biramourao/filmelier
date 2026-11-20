@@ -1,5 +1,5 @@
 /* Tema cinema escuro (FILMELIER-5, design.md D-7): fundo quase preto, texto marfim, dourado e vermelho de cortina.
-   Só fontes do sistema. Os nomes dos tokens vêm da FILMELIER-2; só os valores mudaram. */
+   Uma face própria (Big Shoulders Display, servida pela origem) no letreiro; o texto corrido segue nas fontes do sistema. */
 
 :root {
   --cor-fundo: #121014;
@@ -30,6 +30,31 @@
   --cor-destaque-dourado: #d4a437;
   --cor-destaque-vermelho: #e5484d;
   --cor-sombra: #000000;
+  --cor-letreiro-fundo: #f4ead8;
+  --cor-letreiro-texto: #121014;
+  --cor-lampada: #ffd166;
+  --cor-lampada-apagada: #5a4a2a;
+  --cor-lampada-halo: #7a5a14;
+  --cor-fio: #3a3340;
+}
+
+/* Letreiro (redesign "Marquise"): uma só face própria, servida pela origem, para o nome, os humores e os títulos dos cartazes. */
+@font-face {
+  font-family: "Big Shoulders Display";
+  font-style: normal;
+  font-weight: 700 800;
+  font-display: swap;
+  src: url("./assets/fonts/big-shoulders-display-latin.woff2") format("woff2");
+}
+
+html {
+  cursor: url("./cursor.svg") 2 2, auto;
+  scrollbar-color: var(--cor-borda) var(--cor-fundo);
+}
+
+::selection {
+  color: var(--cor-letreiro-texto);
+  background: var(--cor-lampada);
 }
 
 *,
@@ -54,16 +79,20 @@ body {
 
 main,
 footer {
-  max-width: 48rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 1rem;
 }
 
 h1 {
-  margin-top: 0;
-  font-size: 2rem;
-  line-height: 1.2;
-  color: var(--cor-primaria-escura);
+  margin: 0;
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cor-primaria);
 }
 
 /* Formulário: humores como chips */
@@ -119,7 +148,6 @@ legend {
 
 .opcao:hover {
   border-color: var(--cor-destaque-dourado);
-  box-shadow: 0 0.25rem 0.75rem var(--cor-sombra);
   transform: translateY(-2px);
 }
 
@@ -146,7 +174,7 @@ legend {
   align-items: center;
   gap: 0.5rem;
   min-height: 2.75rem;
-  cursor: pointer;
+  cursor: url("./cursor-ativo.svg") 2 2, pointer;
 }
 
 .emoji {
@@ -198,7 +226,7 @@ button {
   background: var(--cor-destaque-dourado);
   border: 0;
   border-radius: 0.5rem;
-  cursor: pointer;
+  cursor: url("./cursor-ativo.svg") 2 2, pointer;
   transition: background-color 160ms, transform 160ms, box-shadow 160ms;
 }
 
@@ -208,7 +236,6 @@ button:hover {
 
 button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 0.25rem 0.75rem var(--cor-sombra);
 }
 
 button:disabled {
@@ -233,7 +260,7 @@ a {
 #aviso {
   padding: 0.5rem 0.75rem;
   background: var(--cor-aviso-fundo);
-  border-left: 4px solid var(--cor-aviso-borda);
+  border: 1px solid var(--cor-aviso-borda);
   border-radius: 0.5rem;
 }
 
@@ -241,7 +268,7 @@ a {
   padding: 0.5rem 0.75rem;
   color: var(--cor-erro-texto);
   background: var(--cor-erro-fundo);
-  border-left: 4px solid var(--cor-erro-borda);
+  border: 1px solid var(--cor-erro-borda);
   border-radius: 0.5rem;
 }
 
@@ -257,7 +284,7 @@ a {
   min-height: 1.5rem;
   padding: 0.5rem 0;
   font-weight: 600;
-  cursor: pointer;
+  cursor: url("./cursor-ativo.svg") 2 2, pointer;
 }
 
 #temas-controles,
@@ -384,7 +411,6 @@ a {
 }
 
 .card:hover {
-  box-shadow: 0 0.5rem 1.25rem var(--cor-sombra);
   transform: translateY(-2px);
 }
 
@@ -770,7 +796,7 @@ footer {
 #series-aviso {
   padding: 0.5rem 0.75rem;
   background: var(--cor-aviso-fundo);
-  border-left: 4px solid var(--cor-aviso-borda);
+  border: 1px solid var(--cor-aviso-borda);
   border-radius: 0.5rem;
 }
 
@@ -778,7 +804,7 @@ footer {
   padding: 0.5rem 0.75rem;
   color: var(--cor-erro-texto);
   background: var(--cor-erro-fundo);
-  border-left: 4px solid var(--cor-erro-borda);
+  border: 1px solid var(--cor-erro-borda);
   border-radius: 0.5rem;
 }
 
@@ -790,7 +816,7 @@ footer {
   min-height: 1.5rem;
   padding: 0.5rem 0;
   font-weight: 600;
-  cursor: pointer;
+  cursor: url("./cursor-ativo.svg") 2 2, pointer;
 }
 
 #series-temas-controles,
@@ -811,6 +837,673 @@ footer {
 #series-lista {
   padding: 0;
   list-style: none;
+}
+
+/* Redesign "Marquise": o humor vira o letreiro do cinema de rua e as sugestões entram em cartaz. Só tokens do :root; os
+   ids e a ordem do formulário (FILMELIER-1 a 6) não mudam, só a composição. */
+
+a,
+select,
+summary {
+  cursor: url("./cursor-ativo.svg") 2 2, pointer;
+}
+
+a {
+  text-underline-offset: 0.2em;
+}
+
+/* Topo com abertura: a fachada do cinema à noite (vídeo em loop, ver Abertura.tsx) ocupa a largura toda atrás do nome, da
+   chamada e da frase; a fachada fica na metade direita e a esquerda escura segura o texto. */
+body {
+  overflow-x: clip;
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+}
+
+main > .abertura {
+  position: relative;
+  z-index: 0;
+  grid-row: 1 / 4;
+  grid-column: 1 / -1;
+  justify-self: center;
+  align-self: stretch;
+  width: 100vw;
+  margin-top: -1rem;
+  overflow: hidden;
+  background: var(--cor-fundo);
+}
+
+.abertura-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 72% 12%;
+  opacity: 0.55;
+}
+
+/* Sombreado de sala escura: vinheta em volta da tela, o pé fundindo com a página e a parede da esquerda segurando o texto. */
+.abertura::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    radial-gradient(ellipse 75% 95% at 68% 38%, transparent 40%, var(--cor-fundo) 100%),
+    linear-gradient(to top, var(--cor-fundo) 0, transparent 38%),
+    linear-gradient(to bottom, var(--cor-fundo) 0, transparent 24%),
+    linear-gradient(to right, var(--cor-fundo) 0, transparent 55%);
+}
+
+/* Coluna explícita: sem ela o posicionamento automático evita sobrepor a abertura e abre uma coluna nova. */
+main > h1,
+main > .chamada,
+main > .abertura-texto,
+main > .abas {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+}
+
+main > h1 {
+  grid-row: 1;
+}
+
+.chamada {
+  grid-row: 2;
+  max-width: 12ch;
+  margin: 4rem 0 0;
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: clamp(2.75rem, 6.5vw, 5.25rem);
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--cor-texto);
+}
+
+main > .abertura-texto {
+  grid-row: 3;
+  max-width: 34rem;
+  margin: 1rem 0 3.5rem;
+  font-size: 1.1rem;
+  color: var(--cor-texto-secundario);
+}
+
+main > .abas {
+  grid-row: 4;
+  margin: 0 0 0.5rem;
+  border-bottom: 0;
+}
+
+main > [role="tabpanel"] {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 40rem) {
+  main {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, auto);
+    column-gap: 2rem;
+  }
+
+  main > h1 {
+    grid-column: 1;
+  }
+
+  main > .abas {
+    grid-row: 1;
+    grid-column: 2;
+    margin: 0;
+  }
+
+  main > .chamada,
+  main > .abertura-texto {
+    grid-column: 1 / -1;
+  }
+
+  .abertura-video {
+    opacity: 1;
+  }
+
+  .chamada {
+    margin-top: clamp(3rem, 9vh, 6rem);
+  }
+}
+
+/* A marquise: moldura dourada, letreiro em versalete no próprio fio e duas fileiras de lâmpadas que acendem ao escolher. */
+#formulario > fieldset:first-child,
+#series-formulario > fieldset:first-child {
+  position: relative;
+  margin: 0;
+  padding: 2rem 1.25rem;
+  background:
+    radial-gradient(circle, var(--cor-lampada-apagada) 0 0.14rem, transparent 0.18rem) 0.25rem 0.05rem / 1.1rem 0.5rem repeat-x padding-box,
+    radial-gradient(circle, var(--cor-lampada-apagada) 0 0.14rem, transparent 0.18rem) 0.25rem calc(100% - 0.05rem) / 1.1rem 0.5rem repeat-x padding-box,
+    var(--cor-superficie);
+  border: 1px solid var(--cor-primaria);
+  border-radius: 0.5rem;
+}
+
+#formulario > fieldset:first-child > legend,
+#series-formulario > fieldset:first-child > legend {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(to bottom, var(--cor-fundo) 50%, var(--cor-superficie) 50%);
+  padding: 0 0.75rem;
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cor-lampada);
+}
+
+#formulario > fieldset:first-child::before,
+#formulario > fieldset:first-child::after,
+#series-formulario > fieldset:first-child::before,
+#series-formulario > fieldset:first-child::after {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 0.5rem;
+  content: "";
+  background: radial-gradient(circle, var(--cor-lampada) 0 0.14rem, var(--cor-lampada-halo) 0.15rem, transparent 0.34rem) 0.25rem 0 / 1.1rem 0.5rem repeat-x;
+  visibility: hidden;
+}
+
+/* A caixa de posicionamento começa sob a legenda (1,5rem de altura), meia legenda abaixo do fio: sobe 0,75rem. */
+#formulario > fieldset:first-child::before,
+#series-formulario > fieldset:first-child::before {
+  top: -0.7rem;
+}
+
+#formulario > fieldset:first-child::after,
+#series-formulario > fieldset:first-child::after {
+  bottom: 0.05rem;
+}
+
+/* Escolhido o humor, as lâmpadas acendem uma a uma: a de cima corre para a direita, a de baixo volta para a esquerda. */
+#formulario > fieldset:first-child:has(input:checked)::before,
+#series-formulario > fieldset:first-child:has(input:checked)::before {
+  visibility: visible;
+  animation: acender-ida 900ms steps(24, end) both;
+}
+
+#formulario > fieldset:first-child:has(input:checked)::after,
+#series-formulario > fieldset:first-child:has(input:checked)::after {
+  visibility: visible;
+  animation: acender-volta 900ms steps(24, end) both;
+}
+
+@keyframes acender-ida {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@keyframes acender-volta {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* Os humores como letras encaixadas no painel: marfim com letra preta; o escolhido acende em dourado. */
+#humores,
+#series-humores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  min-height: 25rem;
+}
+
+@media (min-width: 32.6rem) {
+  #humores,
+  #series-humores {
+    min-height: 14.4rem;
+  }
+}
+
+@media (min-width: 47.2rem) {
+  #humores,
+  #series-humores {
+    min-height: 6.6rem;
+  }
+}
+
+#humores .opcao,
+#series-humores .opcao {
+  position: relative;
+  min-height: 3rem;
+  padding: 0;
+  color: var(--cor-letreiro-texto);
+  background: var(--cor-letreiro-fundo);
+  border: 1px solid var(--cor-letreiro-fundo);
+  border-radius: 0.5rem;
+}
+
+#humores .opcao input,
+#series-humores .opcao input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+#humores .opcao label,
+#series-humores .opcao label {
+  min-height: 3rem;
+  padding: 0.35rem 1rem;
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+#humores .opcao .emoji,
+#series-humores .opcao .emoji {
+  display: none;
+}
+
+#humores .opcao:has(input:checked),
+#series-humores .opcao:has(input:checked) {
+  background: var(--cor-primaria);
+  border-color: var(--cor-lampada);
+  box-shadow: 0 0 0 2px var(--cor-lampada);
+}
+
+/* Faixa "Refinar": gênero, época, nota e Oscar numa linha, com Recomendar na ponta; os temas abrem embaixo. */
+#formulario,
+#series-formulario {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem 0.75rem;
+  margin-top: 1.5rem;
+}
+
+#formulario > *,
+#series-formulario > * {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* Celular: 2 colunas só por posição na grade (a ordem do DOM não muda); Nota e Oscar dividem a linha. */
+@media (min-width: 22rem) {
+  #formulario {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #formulario > .campo:has(#nota-min),
+  #formulario > .campo:has(#oscar) {
+    grid-column: auto;
+  }
+}
+
+.refinar-rotulo {
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cor-primaria);
+}
+
+select {
+  appearance: none;
+  padding-right: 2.25rem;
+  background: var(--cor-superficie) url("./assets/ui/seta.svg") no-repeat right 0.85rem center / 0.75rem 0.5rem;
+}
+
+.dica-humor {
+  font-size: 0.9rem;
+  color: var(--cor-texto-secundario);
+}
+
+#formulario > details > summary,
+#series-formulario > details > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+}
+
+#formulario > details > summary::-webkit-details-marker,
+#series-formulario > details > summary::-webkit-details-marker {
+  display: none;
+}
+
+#formulario > details > summary::before,
+#series-formulario > details > summary::before {
+  width: 0.75rem;
+  height: 0.5rem;
+  content: "";
+  background: url("./assets/ui/seta.svg") no-repeat center / contain;
+  transform: rotate(-90deg);
+  transition: transform 160ms;
+}
+
+#formulario > details[open] > summary::before,
+#series-formulario > details[open] > summary::before {
+  transform: none;
+}
+
+/* Ícones desenhados em CSS: o "+" e o "−" dos temas viram traços; o emoji do Oscar sai, o texto já diz o prêmio. */
+.tag-icone {
+  position: relative;
+  font-size: 0;
+}
+
+.tag-icone::before,
+.tag-controle button[data-acao="incluir"] .tag-icone::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.6rem;
+  height: 2px;
+  content: "";
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.tag-controle button[data-acao="incluir"] .tag-icone::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.card .oscar .emoji {
+  display: none;
+}
+
+#formulario .campo label,
+#series-formulario .campo label,
+#formulario fieldset.epoca > legend,
+#series-formulario fieldset.epoca > legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-texto-secundario);
+}
+
+#formulario fieldset.epoca,
+#series-formulario fieldset.epoca {
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+}
+
+#formulario fieldset.epoca > legend,
+#series-formulario fieldset.epoca > legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+}
+
+#formulario fieldset.epoca .periodo,
+#series-formulario fieldset.epoca .periodo {
+  clear: both;
+}
+
+#formulario fieldset.epoca .campo,
+#series-formulario fieldset.epoca .campo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#formulario fieldset.epoca .campo select,
+#series-formulario fieldset.epoca .campo select {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+#formulario fieldset.epoca .campo label,
+#series-formulario fieldset.epoca .campo label {
+  margin-top: 0.25rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 32.59rem) {
+  #humores,
+  #series-humores {
+    gap: 0.5rem;
+  }
+
+  #humores .opcao label,
+  #series-humores .opcao label {
+    min-height: 2.75rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 1.1rem;
+  }
+}
+
+#formulario > button[type="submit"],
+#series-formulario > button[type="submit"],
+#outras,
+#series-outras {
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#formulario > details,
+#series-formulario > details {
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--cor-fio);
+}
+
+@media (min-width: 64rem) {
+  #formulario {
+    grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(10rem, auto);
+    align-items: end;
+  }
+
+  #series-formulario {
+    grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 2fr) minmax(10rem, auto);
+    align-items: end;
+  }
+
+  #formulario > *,
+  #series-formulario > * {
+    grid-row: 2;
+    grid-column: auto;
+  }
+
+  #formulario > fieldset:first-child,
+  #series-formulario > fieldset:first-child {
+    grid-row: 1;
+    grid-column: 1 / -1;
+    margin-bottom: 0.5rem;
+  }
+
+  #formulario > .refinar-rotulo,
+  #series-formulario > .refinar-rotulo {
+    align-self: end;
+    padding: 0 0.5rem 0.75rem 0;
+  }
+
+  #formulario > .dica-humor,
+  #series-formulario > .dica-humor {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    text-align: right;
+  }
+
+  #formulario > details,
+  #series-formulario > details {
+    grid-row: 4;
+    grid-column: 1 / -1;
+  }
+}
+
+/* Em cartaz: no desktop os cartazes ficam lado a lado, capa no topo e o canhoto de onde assistir no pé. */
+#resultado,
+#series-resultado {
+  margin-top: 2rem;
+}
+
+.card h2 {
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.card .placeholder {
+  position: relative;
+}
+
+.card .placeholder::after {
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.75rem;
+  left: 0.9rem;
+  content: attr(data-titulo);
+  font-family: "Big Shoulders Display", system-ui, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cor-letreiro-fundo);
+  overflow-wrap: anywhere;
+}
+
+#lista > .card,
+#series-lista > .card {
+  animation: cortina 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#lista > .card:nth-child(2),
+#series-lista > .card:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+#lista > .card:nth-child(3),
+#series-lista > .card:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+#lista > .card:nth-child(4),
+#series-lista > .card:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+#lista > .card:nth-child(5),
+#series-lista > .card:nth-child(5) {
+  animation-delay: 320ms;
+}
+
+@keyframes cortina {
+  from {
+    clip-path: inset(0 50% 0 50%);
+    opacity: 0.3;
+  }
+
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+@media (min-width: 64rem) {
+  #lista,
+  #series-lista {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+
+  #lista .card,
+  #series-lista .card {
+    align-content: start;
+  }
+
+  #lista .card,
+  #series-lista .card {
+    grid-template-columns: minmax(0, 1fr);
+    margin: 0;
+    padding: 0 0 1rem;
+    overflow: hidden;
+    border-color: var(--cor-fio);
+    border-radius: 0.5rem;
+  }
+
+  #lista .card > *,
+  #series-lista .card > * {
+    grid-row: auto;
+    grid-column: 1;
+    margin-right: 0.9rem;
+    margin-left: 0.9rem;
+  }
+
+  #lista .card > .capa,
+  #series-lista .card > .capa {
+    grid-row: auto;
+    margin: 0 0 0.9rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+
+  /* O canhoto: o card vira coluna e "onde assistir" desce para o pé, com o picote logo acima do texto. */
+  #lista .card,
+  #series-lista .card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #lista .card:hover,
+  #series-lista .card:hover {
+    border-color: var(--cor-primaria);
+  }
+
+  #lista .card .provedores,
+  #series-lista .card .provedores {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin-top: auto;
+  }
+
+}
+
+/* A voz do canhoto vale em toda largura: picote tracejado e texto em versalete dourado. */
+#lista .card .provedores > :first-child,
+#series-lista .card .provedores > :first-child {
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--cor-borda);
+}
+
+#lista .card .estado-provedores,
+#lista .card .atribuicao-provedores,
+#lista .card .rotulo-categoria,
+#series-lista .card .estado-provedores,
+#series-lista .card .atribuicao-provedores,
+#series-lista .card .rotulo-categoria {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cor-link);
+}
+
+footer {
+  margin-top: 3rem;
+  border-top: 1px solid var(--cor-fio);
 }
 
 @media (prefers-reduced-motion: reduce) {

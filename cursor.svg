@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- O favicon em 24 px; o canto superior esquerdo é reto e marca o ponto do clique (2,2). -->
+  <path d="M2 2h15a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5z" fill="#d4a437" stroke="#121014" stroke-width="1"/>
+  <path d="M9.5 7.5l8 4.5-8 4.5z" fill="#121014"/>
+</svg>

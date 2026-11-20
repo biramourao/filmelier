@@ -72,8 +72,13 @@ test('AC-18: o detector de cor literal reconhece hex, rgb e nome de cor', () => 
   for (const a of amostras) assert.match(a, re, a);
 });
 
-test('AC-18: sem @import nem @font-face, só fontes do sistema', () => {
-  assert.doesNotMatch(css, /@import|@font-face/);
+// Redesign "Marquise": 1 face própria para o letreiro, servida pela própria origem (CSP default-src 'self'); o texto corrido
+// continua nas fontes do sistema.
+test('AC-18: sem @import; @font-face só com arquivo woff2 da própria origem e o corpo em fontes do sistema', () => {
+  assert.doesNotMatch(css, /@import/);
+  const faces = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
+  assert.ok(faces.length <= 1, `${faces.length} @font-face`);
+  for (const face of faces) assert.match(face, /src:\s*url\("\.\/assets\/fonts\/[a-z0-9-]+\.woff2"\)\s*format\("woff2"\)/);
   assert.match(css, /font-family:\s*system-ui/);
 });
 

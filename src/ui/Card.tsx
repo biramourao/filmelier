@@ -18,7 +18,8 @@ export function Card({ card, enriquecido, agendarQuadro }: Props) {
   const meta = [`${card.ano} · ${card.generos.join(', ')}`, card.notaTexto].filter(Boolean).join(' · ');
   return (
     <li className={card.provedores ? 'card titulo-reservado' : 'card'}>
-      <div className={capa ? 'capa' : 'capa placeholder'} aria-hidden={capa ? undefined : 'true'}>
+      {/* Sem capa, o cartaz vira tipográfico: o título entra só pelo CSS (attr), fora da árvore de acessibilidade. */}
+      <div className={capa ? 'capa' : 'capa placeholder'} aria-hidden={capa ? undefined : 'true'} data-titulo={capa ? undefined : card.titulo}>
         {capa && (
           <img
             loading={capa.loading}

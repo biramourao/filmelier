@@ -9,6 +9,7 @@ import { TEXTO_ERRO } from './LimiteDeErro';
 import { Abas, type AbaId } from './Abas';
 import { Painel, type Pagina, type ConfigPainel } from './Painel';
 import { Rodape } from './Rodape';
+import { Abertura } from './Abertura';
 
 const CARREGANDO: Pagina = { status: 'carregando', humores: null, itens: [], generos: [], listaTags: [], data: '' };
 const ERRO: Pagina = { ...CARREGANDO, status: 'erro' };
@@ -105,8 +106,10 @@ export function App({ dependencias }: { dependencias: Dependencias }) {
   return (
     <>
       <main>
+        <Abertura />
         <h1>Filmelier</h1>
-        <p>{ABERTURA[abaAtiva]}</p>
+        <p className="chamada">O que vai bem com a sua noite?</p>
+        <p className="abertura-texto">{ABERTURA[abaAtiva]}</p>
         <Abas ativa={abaAtiva} aoAtivar={ativar} />
         <div role="tabpanel" id="painel-filmes" aria-labelledby="aba-filmes" hidden={abaAtiva !== 'filmes'}>
           <Painel dependencias={dependencias} pagina={pagina} config={configFilmes} ativa={abaAtiva === 'filmes'} />

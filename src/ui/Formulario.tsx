@@ -44,6 +44,8 @@ export function Formulario({
         <Humores humores={humores} selecionado={humor} aoEscolher={aoEscolherHumor} prefixo={prefixo} />
       </fieldset>
 
+      <p className="refinar-rotulo">Refinar</p>
+
       <div className="campo">
         <label htmlFor={`${prefixo}genero`}>Gênero (opcional)</label>
         <select id={`${prefixo}genero`} value={genero} onChange={(e) => aoMudarGenero(e.target.value)}>
@@ -95,7 +97,16 @@ export function Formulario({
 
       {temas}
 
-      <button type="submit" id={`${prefixo}recomendar`} disabled={!(pronta && humor)}>Recomendar</button>
+      <button
+        type="submit"
+        id={`${prefixo}recomendar`}
+        disabled={!(pronta && humor)}
+        aria-describedby={pronta && !humor ? `${prefixo}dica-humor` : undefined}
+      >
+        Recomendar
+      </button>
+      {/* Só texto: diz por que o botão está desligado enquanto nenhum humor foi escolhido. */}
+      <p id={`${prefixo}dica-humor`} className="dica-humor" hidden={!pronta || humor !== null}>Escolha um humor no letreiro para liberar as sugestões.</p>
     </form>
   );
 }
