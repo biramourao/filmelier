@@ -170,7 +170,7 @@ test('AC-18: o último bloco do arquivo é prefers-reduced-motion e anula toda t
 test('AC-12: foco visível com outline-offset de no mínimo 2px e sem fonte externa nem @import', () => {
   const m = /:focus-visible[^{]*\{[^}]*outline-offset:\s*(\d+)px/.exec(css);
   assert.ok(m && Number(m[1]) >= 2);
-  assert.doesNotMatch(css, /@import|@font-face|fonts\.googleapis/);
+  assert.doesNotMatch(css, /@import|fonts\.googleapis|fonts\.gstatic|url\(\s*["']?(https?:)?\/\//);
 });
 
 // FILMELIER-6 (D-9): pares das abas e da linha de situação (tabela própria; os 32 pares acima não mudam).
